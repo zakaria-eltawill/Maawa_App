@@ -30,15 +30,40 @@ class PaymentApi {
         debugPrint('✅ PaymentApi.mockPayment: Payment processed successfully');
         debugPrint('📦 Response status: ${response.statusCode}');
         debugPrint('📦 Response data: ${response.data}');
+        
+        // Log payment response details if available
+        if (response.data is Map<String, dynamic>) {
+          final data = response.data as Map<String, dynamic>;
+          debugPrint('📦   Booking ID: ${data['booking_id']}');
+          debugPrint('📦   Status: ${data['status']}');
+          debugPrint('📦   Is Paid: ${data['is_paid']}');
+          debugPrint('📦   Receipt No: ${data['receipt_no']}');
+          debugPrint('📦   Paid At: ${data['paid_at']}');
+        }
       }
     } catch (e, stackTrace) {
       if (kDebugMode) {
         debugPrint('❌ PaymentApi.mockPayment: Error - $e');
         debugPrint('❌ Stack trace: $stackTrace');
         if (e is DioException) {
-          debugPrint('❌ Status Code: ${e.response?.statusCode}');
-          debugPrint('❌ Response Data: ${e.response?.data}');
+          final statusCode = e.response?.statusCode;
+          final responseData = e.response?.data;
+          debugPrint('❌ Status Code: $statusCode');
+          debugPrint('❌ Response Data: $responseData');
           debugPrint('❌ Request URL: ${e.requestOptions.uri}');
+          
+          // Log specific error details
+          if (statusCode == 410) {
+            debugPrint('❌ ERROR: Booking is not in ACCEPTED or CONFIRMED status');
+            if (responseData is Map<String, dynamic>) {
+              debugPrint('❌   Detail: ${responseData['detail']}');
+            }
+          } else if (statusCode == 402) {
+            debugPrint('❌ ERROR: Payment processing failed');
+            if (responseData is Map<String, dynamic>) {
+              debugPrint('❌   Detail: ${responseData['detail']}');
+            }
+          }
         }
       }
       rethrow;

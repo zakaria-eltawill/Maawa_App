@@ -320,6 +320,12 @@ abstract class AppLocalizations {
   /// **'اختر المنطقة'**
   String get selectRegion;
 
+  /// No description provided for @role.
+  ///
+  /// In ar, this message translates to:
+  /// **'الدور'**
+  String get role;
+
   /// No description provided for @rememberMe.
   ///
   /// In ar, this message translates to:
@@ -818,6 +824,12 @@ abstract class AppLocalizations {
   /// **'تم قبول حجزك! أكمل الدفع لتأكيد إقامتك.'**
   String get bookingAcceptedCompletePayment;
 
+  /// No description provided for @paymentDeadlineWarning.
+  ///
+  /// In ar, this message translates to:
+  /// **'اذا لم يتم الدفع خلال اربع ساعات من وقت قبول طلب حجزك سيتم الغاء الحجز'**
+  String get paymentDeadlineWarning;
+
   /// No description provided for @payment.
   ///
   /// In ar, this message translates to:
@@ -1141,6 +1153,60 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'ملغي'**
   String get cancelled;
+
+  /// No description provided for @canceled.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملغي'**
+  String get canceled;
+
+  /// No description provided for @expired.
+  ///
+  /// In ar, this message translates to:
+  /// **'منتهي'**
+  String get expired;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيد الانتظار'**
+  String get statusPending;
+
+  /// No description provided for @statusAccepted.
+  ///
+  /// In ar, this message translates to:
+  /// **'مقبول'**
+  String get statusAccepted;
+
+  /// No description provided for @statusConfirmed.
+  ///
+  /// In ar, this message translates to:
+  /// **'مؤكد'**
+  String get statusConfirmed;
+
+  /// No description provided for @statusCompleted.
+  ///
+  /// In ar, this message translates to:
+  /// **'مكتمل'**
+  String get statusCompleted;
+
+  /// No description provided for @statusRejected.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرفوض'**
+  String get statusRejected;
+
+  /// No description provided for @statusCanceled.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملغي'**
+  String get statusCanceled;
+
+  /// No description provided for @statusExpired.
+  ///
+  /// In ar, this message translates to:
+  /// **'منتهي'**
+  String get statusExpired;
 
   /// No description provided for @createProposal.
   ///

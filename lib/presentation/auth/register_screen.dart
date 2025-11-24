@@ -317,7 +317,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       DropdownButtonFormField<String>(
                         value: _selectedRole,
                         decoration: InputDecoration(
-                          labelText: 'الدور',
+                          labelText: l10n.role,
                           prefixIcon: const Icon(Icons.badge_outlined),
                         ),
                         items: [

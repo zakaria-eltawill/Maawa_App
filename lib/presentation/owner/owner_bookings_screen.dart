@@ -10,7 +10,6 @@ import 'package:maawa_project/l10n/app_localizations.dart';
 import 'package:maawa_project/presentation/widgets/empty_state.dart';
 import 'package:maawa_project/presentation/widgets/error_state.dart';
 import 'package:maawa_project/presentation/widgets/shimmer_loading.dart';
-import 'package:maawa_project/presentation/widgets/app_button.dart';
 import 'package:maawa_project/presentation/widgets/app_card.dart';
 import 'package:maawa_project/presentation/widgets/success_dialog.dart';
 import 'package:intl/intl.dart';
@@ -106,17 +105,24 @@ class OwnerBookingsScreen extends ConsumerWidget {
                   // Get pending booking IDs to filter them out
                   final pendingIds = pendingAsync.valueOrNull?.map((b) => b.id).toSet() ?? <String>{};
                   
-                  // Filter out pending bookings and sort by updated_at (most recent first), then by created_at
+                  // Filter out pending bookings and sort: accepted first, then by updated_at (most recent first), then by created_at
                   final recentBookings = allBookings
                       .where((booking) => !pendingIds.contains(booking.id))
                       .toList()
                     ..sort((a, b) {
-                      // Sort by updated_at first (most recent first), then by created_at
+                      // Priority 1: Accepted bookings first
+                      final aIsAccepted = a.status == BookingStatus.accepted;
+                      final bIsAccepted = b.status == BookingStatus.accepted;
+                      if (aIsAccepted && !bIsAccepted) return -1;
+                      if (!aIsAccepted && bIsAccepted) return 1;
+                      
+                      // Priority 2: Sort by updated_at (most recent first)
                       final aUpdated = a.updatedAt ?? a.createdAt;
                       final bUpdated = b.updatedAt ?? b.createdAt;
                       final updatedCompare = bUpdated.compareTo(aUpdated);
                       if (updatedCompare != 0) return updatedCompare;
-                      // If updated_at is the same, sort by created_at (most recent first)
+                      
+                      // Priority 3: If updated_at is the same, sort by created_at (most recent first)
                       return b.createdAt.compareTo(a.createdAt);
                     });
                   
@@ -295,8 +301,24 @@ class _OwnerBookingCardState extends ConsumerState<_OwnerBookingCard> {
     }
   }
 
-  String _getStatusLabel(BookingStatus status) {
-    return status.name.toUpperCase();
+  String _getStatusLabel(BookingStatus status, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    switch (status) {
+      case BookingStatus.pending:
+        return l10n.statusPending;
+      case BookingStatus.accepted:
+        return l10n.statusAccepted;
+      case BookingStatus.confirmed:
+        return l10n.statusConfirmed;
+      case BookingStatus.completed:
+        return l10n.statusCompleted;
+      case BookingStatus.rejected:
+        return l10n.statusRejected;
+      case BookingStatus.canceled:
+        return l10n.statusCanceled;
+      case BookingStatus.expired:
+        return l10n.statusExpired;
+    }
   }
 
   Widget _buildPropertyImage(Booking booking) {
@@ -707,10 +729,12 @@ class _OwnerBookingCardState extends ConsumerState<_OwnerBookingCard> {
   @override
   Widget build(BuildContext context) {
     final booking = widget.booking;
+    final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context);
     final dateFormat = DateFormat('MMM dd, yyyy');
     final priceFormat = NumberFormat.currency(
-      locale: 'ar_LY',
-      symbol: 'د.ل',
+      locale: locale.languageCode == 'ar' ? 'ar_LY' : 'en_US',
+      symbol: locale.languageCode == 'ar' ? 'د.ل' : 'LYD',
       decimalDigits: 2,
     );
     final remainingDuration = _getRemainingDuration(booking);
@@ -720,6 +744,9 @@ class _OwnerBookingCardState extends ConsumerState<_OwnerBookingCard> {
         onTap: () {
                   // Store booking in provider before navigating (backend doesn't have get-by-id endpoint)
                   ref.read(selectedBookingProvider.notifier).state = booking;
+                  // Store booking in provider as fallback before navigating
+                  ref.read(selectedBookingProvider.notifier).state = booking;
+                  // Navigate to booking detail - provider will use list booking first, then refresh from API
                   context.push('/home/booking/${booking.id}');
         },
         borderRadius: BorderRadius.circular(12),
@@ -763,7 +790,7 @@ class _OwnerBookingCardState extends ConsumerState<_OwnerBookingCard> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                _getStatusLabel(booking.status),
+                                _getStatusLabel(booking.status, context),
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                       color: _getStatusColor(booking.status),
                                       fontWeight: FontWeight.w600,
@@ -902,26 +929,75 @@ class _OwnerBookingCardState extends ConsumerState<_OwnerBookingCard> {
               // Action Buttons (only for pending bookings)
               if (widget.showActions && booking.status == BookingStatus.pending) ...[
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        text: 'Accept',
-                        onPressed: _isProcessing
-                            ? null
-                            : () => _handleOwnerDecision('ACCEPT'),
-                        isLoading: _isProcessing,
+                // Accept Button (Green)
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing 
+                        ? null 
+                        : () => _handleOwnerDecision('ACCEPT'),
+                    icon: _isProcessing 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.check_circle, size: 24),
+                    label: Text(
+                      l10n.acceptBooking,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.successGreen,
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shadowColor: AppTheme.successGreen.withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: AppButton(
-                        text: 'Reject',
-                        isOutlined: true,
-                        onPressed: _isProcessing ? null : _showRejectDialog,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Reject Button (Red)
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : _showRejectDialog,
+                    icon: const Icon(Icons.cancel_outlined, size: 24),
+                    label: Text(
+                      l10n.rejectBookingButton,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.dangerRed,
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shadowColor: AppTheme.dangerRed.withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ],
             ],

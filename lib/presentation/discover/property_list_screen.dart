@@ -34,6 +34,12 @@ class _PropertyListScreenState extends ConsumerState<PropertyListScreen> {
     super.dispose();
   }
 
+  String _getPriceRangeText(int minPrice, int maxPrice) {
+    final locale = Localizations.localeOf(context);
+    final symbol = locale.languageCode == 'ar' ? 'د.ل' : 'LYD';
+    return 'Price: $minPrice - $maxPrice+ $symbol';
+  }
+
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     
@@ -385,8 +391,7 @@ class _PropertyListScreenState extends ConsumerState<PropertyListScreen> {
                         ),
                       if (_filters.minPrice != null || _filters.maxPrice != null)
                         _ActiveFilterChip(
-                          label:
-                              'Price: ${_filters.minPrice?.round() ?? 0} - ${_filters.maxPrice?.round() ?? 10000}+ د.ل',
+                          label: _getPriceRangeText(_filters.minPrice?.round() ?? 0, _filters.maxPrice?.round() ?? 10000),
                           onRemove: () {
                             setState(() {
                               _filters = PropertyFilters(

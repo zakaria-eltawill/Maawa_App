@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:maawa_project/core/theme/app_theme.dart';
 import 'package:maawa_project/core/di/providers.dart';
 import 'package:maawa_project/domain/entities/property.dart';
@@ -306,8 +305,9 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
   Widget build(BuildContext context) {
     final propertyAsync = ref.watch(propertyDetailProvider(widget.propertyId));
     final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context);
     final priceFormat = NumberFormat.currency(
-      symbol: 'دل',
+      symbol: locale.languageCode == 'ar' ? 'دل' : 'LYD',
       decimalDigits: 0,
       customPattern: '#,### \u00A4',
     );
@@ -321,8 +321,7 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
       body: propertyAsync.when(
         data: (property) {
           final subtotal = property.pricePerNight * _numberOfNights;
-          final serviceFee = subtotal * 0.05; // 5% service fee
-          final total = subtotal + serviceFee;
+          final total = subtotal; // Total is just subtotal (no service fee)
 
           return SingleChildScrollView(
             child: Form(
@@ -445,15 +444,21 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                l10n.numberOfGuests,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.gray700,
+                              Flexible(
+                                child: Text(
+                                  l10n.numberOfGuests,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.gray700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
                                     onPressed: _numberOfGuests > 1
@@ -461,6 +466,11 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
                                         : null,
                                     icon: const Icon(Icons.remove_circle_outline),
                                     color: AppTheme.primaryBlue,
+                                    padding: const EdgeInsets.all(8),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 40,
+                                      minHeight: 40,
+                                    ),
                                   ),
                                   Container(
                                     width: 40,
@@ -478,6 +488,11 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
                                     onPressed: () => setState(() => _numberOfGuests++),
                                     icon: const Icon(Icons.add_circle_outline),
                                     color: AppTheme.primaryBlue,
+                                    padding: const EdgeInsets.all(8),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 40,
+                                      minHeight: 40,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -576,11 +591,6 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
                             ),
                             const Divider(height: 24),
                             _PriceRow(
-                              label: l10n.serviceFee,
-                              value: priceFormat.format(serviceFee),
-                            ),
-                            const Divider(height: 24),
-                            _PriceRow(
                               label: l10n.totalPrice,
                               value: priceFormat.format(total),
                               isTotal: true,
@@ -633,7 +643,7 @@ class _BookingCreateScreenState extends ConsumerState<BookingCreateScreen> {
           ),
           child: AppButton(
             text: _numberOfNights > 0
-                ? '${l10n.requestBooking} • ${priceFormat.format(property.pricePerNight * _numberOfNights + (property.pricePerNight * _numberOfNights * 0.05))}'
+                ? '${l10n.requestBooking} • ${priceFormat.format(property.pricePerNight * _numberOfNights)}'
                 : l10n.requestBooking,
             onPressed: _numberOfNights > 0
                 ? () => _createBooking(property.pricePerNight, property)

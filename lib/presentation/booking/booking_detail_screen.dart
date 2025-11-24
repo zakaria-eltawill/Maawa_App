@@ -41,8 +41,24 @@ class BookingDetailScreen extends ConsumerWidget {
     }
   }
 
-  String _getStatusLabel(BookingStatus status) {
-    return status.name.toUpperCase();
+  String _getStatusLabel(BookingStatus status, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    switch (status) {
+      case BookingStatus.pending:
+        return l10n.statusPending;
+      case BookingStatus.accepted:
+        return l10n.statusAccepted;
+      case BookingStatus.confirmed:
+        return l10n.statusConfirmed;
+      case BookingStatus.completed:
+        return l10n.statusCompleted;
+      case BookingStatus.rejected:
+        return l10n.statusRejected;
+      case BookingStatus.canceled:
+        return l10n.statusCanceled;
+      case BookingStatus.expired:
+        return l10n.statusExpired;
+    }
   }
 
   @override
@@ -77,104 +93,115 @@ class BookingDetailScreen extends ConsumerWidget {
             ref.invalidate(propertyDetailProvider(booking.propertyId));
           }
         },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: bookingAsync.when(
-            data: (booking) {
-          // Always fetch property details for owners to show complete information
-          final propertyAsync = ref.watch(propertyDetailProvider(booking.propertyId));
-          
-          return propertyAsync.when(
-            data: (property) {
-              // Create enriched booking with property data
-              final enrichedBooking = Booking(
-                id: booking.id,
-                propertyId: booking.propertyId,
-                propertyName: booking.propertyName ?? property.name,
-                propertyType: booking.propertyType ?? property.propertyType,
-                propertyCity: booking.propertyCity ?? property.city,
-                propertyThumbnail: property.imageUrls.isNotEmpty 
-                    ? property.imageUrls.first 
-                    : booking.propertyThumbnail,
-                tenantId: booking.tenantId,
-                tenantName: booking.tenantName,
-                tenantEmail: booking.tenantEmail,
-                tenantPhone: booking.tenantPhone,
-                tenantRegion: booking.tenantRegion,
-                ownerName: booking.ownerName ?? property.ownerName,
-                ownerPhone: booking.ownerPhone ?? property.ownerPhone,
-                checkIn: booking.checkIn,
-                checkOut: booking.checkOut,
-                status: booking.status,
-                guests: booking.guests,
-                totalPrice: booking.totalPrice,
-                isPaid: booking.isPaid,
-                createdAt: booking.createdAt,
-                updatedAt: booking.updatedAt,
-                rejectionReason: booking.rejectionReason,
-                timeline: booking.timeline,
-              );
-              
-              return _BookingDetailContent(
-                booking: enrichedBooking,
-                property: property,
-                getStatusColor: _getStatusColor,
-                getStatusLabel: _getStatusLabel,
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) {
-              // If property fetch fails, show booking without property details
-              return _BookingDetailContent(
-                booking: booking,
-                property: null,
-                getStatusColor: _getStatusColor,
-                getStatusLabel: _getStatusLabel,
-              );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) {
-          if (kDebugMode) {
-            debugPrint('❌ Booking detail fetch error: $error');
-            debugPrint('📋 Stack trace: $stack');
-          }
-          
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: AppTheme.dangerRed),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.failedToLoadBookingDetails,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
+        child: bookingAsync.when(
+          data: (booking) {
+            // Always fetch property details for owners to show complete information
+            final propertyAsync = ref.watch(propertyDetailProvider(booking.propertyId));
+            
+            return propertyAsync.when(
+              data: (property) {
+                // Create enriched booking with property data
+                final enrichedBooking = Booking(
+                  id: booking.id,
+                  propertyId: booking.propertyId,
+                  propertyName: booking.propertyName ?? property.name,
+                  propertyType: booking.propertyType ?? property.propertyType,
+                  propertyCity: booking.propertyCity ?? property.city,
+                  propertyThumbnail: property.imageUrls.isNotEmpty 
+                      ? property.imageUrls.first 
+                      : booking.propertyThumbnail,
+                  tenantId: booking.tenantId,
+                  tenantName: booking.tenantName,
+                  tenantEmail: booking.tenantEmail,
+                  tenantPhone: booking.tenantPhone,
+                  tenantRegion: booking.tenantRegion,
+                  ownerName: booking.ownerName ?? property.ownerName,
+                  ownerPhone: booking.ownerPhone ?? property.ownerPhone,
+                  checkIn: booking.checkIn,
+                  checkOut: booking.checkOut,
+                  status: booking.status,
+                  guests: booking.guests,
+                  totalPrice: booking.totalPrice,
+                  isPaid: booking.isPaid,
+                  createdAt: booking.createdAt,
+                  updatedAt: booking.updatedAt,
+                  rejectionReason: booking.rejectionReason,
+                  timeline: booking.timeline,
+                );
+                
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: _BookingDetailContent(
+                    booking: enrichedBooking,
+                    property: property,
+                    getStatusColor: _getStatusColor,
+                    getStatusLabel: (status) => _getStatusLabel(status, context),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    error.toString().contains('404') || error.toString().contains('NotFound')
-                        ? l10n.bookingNotFound
-                        : error.toString(),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.gray600,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  AppButton(
-                    text: l10n.goBack,
-                    onPressed: () => context.pop(),
-                  ),
-                ],
+                );
+              },
+              loading: () => const SizedBox.expand(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
               ),
+              error: (error, stack) {
+                // If property fetch fails, show booking without property details
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: _BookingDetailContent(
+                    booking: booking,
+                    property: null,
+                    getStatusColor: _getStatusColor,
+                    getStatusLabel: (status) => _getStatusLabel(status, context),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const SizedBox.expand(
+            child: Center(
+              child: CircularProgressIndicator(),
             ),
-          );
-        },
           ),
+          error: (error, stack) {
+            if (kDebugMode) {
+              debugPrint('❌ Booking detail fetch error: $error');
+              debugPrint('📋 Stack trace: $stack');
+            }
+            
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: AppTheme.dangerRed),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.failedToLoadBookingDetails,
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      error.toString().contains('404') || error.toString().contains('NotFound')
+                          ? l10n.bookingNotFound
+                          : error.toString(),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.gray600,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    AppButton(
+                      text: l10n.goBack,
+                      onPressed: () => context.pop(),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -270,49 +297,8 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
   }
 
   Future<void> _handlePayment() async {
-    setState(() => _isProcessing = true);
-
-    try {
-      final processMockPaymentUseCase = ref.read(processMockPaymentUseCaseProvider);
-      
-      await processMockPaymentUseCase(
-        bookingId: widget.booking.id,
-        fail: false, // Set to true to test payment failure
-      );
-      
-      // Invalidate bookings lists to refresh
-      ref.invalidate(bookingsProvider);
-      ref.invalidate(bookingDetailProvider(widget.booking.id));
-      
-      if (mounted) {
-        // Show success animation
-        final l10n = AppLocalizations.of(context);
-        await SuccessDialog.show(
-          context,
-          title: l10n.paymentSuccessful,
-          message: l10n.bookingConfirmedMessage,
-        );
-        
-        if (mounted) {
-          context.pop();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${l10n.paymentFailed}: ${e.toString()}'),
-            backgroundColor: AppTheme.dangerRed,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-      }
-    }
+    // Navigate to payment screen - payment processing happens there
+    context.push('/home/booking/${widget.booking.id}/payment');
   }
 
   void _showRejectDialog() {
@@ -371,9 +357,10 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
     final l10n = AppLocalizations.of(context);
     
     final dateFormat = DateFormat('MMM dd, yyyy');
+    final locale = Localizations.localeOf(context);
     final priceFormat = NumberFormat.currency(
-      locale: 'ar_LY',
-      symbol: 'د.ل',
+      locale: locale.languageCode == 'ar' ? 'ar_LY' : 'en_US',
+      symbol: locale.languageCode == 'ar' ? 'د.ل' : 'LYD',
       decimalDigits: 2,
     );
 
@@ -435,36 +422,45 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Property Name & Status
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            booking.propertyName ?? widget.property?.name ?? 'Property',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          if (booking.propertyType != null || widget.property != null) ...[
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(Icons.category_outlined, size: 16, color: AppTheme.gray600),
-                                const SizedBox(width: 4),
-                                Text(
-                                  booking.propertyType ?? widget.property?.propertyType ?? '',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: AppTheme.gray600,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                booking.propertyName ?? widget.property?.name ?? 'Property',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              if (booking.propertyType != null || widget.property != null) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(Icons.category_outlined, size: 16, color: AppTheme.gray600),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _getPropertyTypeLabel(
+                                        booking.propertyType ?? widget.property?.propertyType ?? '',
+                                        l10n,
                                       ),
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppTheme.gray600,
+                                          ),
+                                    ),
+                                  ],
                                 ),
                               ],
-                            ),
-                          ],
-                        ],
-                      ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppTheme.spacingMD,
@@ -751,39 +747,47 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
                             value: booking.tenantPhone!,
                           ),
                           const SizedBox(height: AppTheme.spacingMD),
-                          OutlinedButton.icon(
-                            onPressed: () async {
-                              final phoneNumber = booking.tenantPhone!;
-                              final uri = Uri.parse('tel:$phoneNumber');
-                              final messenger = ScaffoldMessenger.of(context);
-                              try {
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                } else {
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final phoneNumber = booking.tenantPhone!;
+                                final uri = Uri.parse('tel:$phoneNumber');
+                                final messenger = ScaffoldMessenger.of(context);
+                                try {
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  } else {
+                                    if (!mounted) return;
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text('Cannot make phone call to $phoneNumber'),
+                                        backgroundColor: AppTheme.dangerRed,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
                                   if (!mounted) return;
                                   messenger.showSnackBar(
                                     SnackBar(
-                                      content: Text('Cannot make phone call to $phoneNumber'),
+                                      content: Text('Failed to open phone dialer: $e'),
                                       backgroundColor: AppTheme.dangerRed,
                                     ),
                                   );
                                 }
-                              } catch (e) {
-                                if (!mounted) return;
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text('Failed to open phone dialer: $e'),
-                                    backgroundColor: AppTheme.dangerRed,
-                                  ),
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.phone),
-                            label: Text(l10n.contactTenant),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppTheme.spacingLG,
-                                vertical: AppTheme.spacingMD,
+                              },
+                              icon: const Icon(Icons.phone, color: Colors.white),
+                              label: Text(l10n.contactTenant),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryBlue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
@@ -831,6 +835,53 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
                             icon: Icons.phone_outlined,
                             label: l10n.phoneNumber,
                             value: booking.ownerPhone ?? widget.property?.ownerPhone ?? '',
+                          ),
+                          const SizedBox(height: AppTheme.spacingMD),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final phoneNumber = booking.ownerPhone ?? widget.property?.ownerPhone;
+                                if (phoneNumber == null || phoneNumber.isEmpty) return;
+                                
+                                final uri = Uri.parse('tel:$phoneNumber');
+                                final messenger = ScaffoldMessenger.of(context);
+                                try {
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  } else {
+                                    if (!mounted) return;
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text('Cannot make phone call to $phoneNumber'),
+                                        backgroundColor: AppTheme.dangerRed,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text('Failed to open phone dialer: $e'),
+                                      backgroundColor: AppTheme.dangerRed,
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.phone, color: Colors.white),
+                              label: Text(l10n.contactOwner),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryBlue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ],
@@ -972,18 +1023,75 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
 
                 // Action Buttons (for owners only)
                 if (_userRole == UserRole.owner && booking.status == BookingStatus.pending) ...[
-                  AppButton(
-                    text: l10n.acceptBooking,
-                    onPressed: _isProcessing 
-                        ? null 
-                        : () => _handleOwnerDecision('ACCEPT'),
-                    isLoading: _isProcessing,
+                  // Accept Button (Green)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: _isProcessing 
+                          ? null 
+                          : () => _handleOwnerDecision('ACCEPT'),
+                      icon: _isProcessing 
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Icon(Icons.check_circle, size: 24),
+                      label: Text(
+                        l10n.acceptBooking,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.successGreen,
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shadowColor: AppTheme.successGreen.withValues(alpha: 0.3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: AppTheme.spacingSM),
-                  AppButton(
-                    text: l10n.rejectBookingButton,
-                    isOutlined: true,
-                    onPressed: _isProcessing ? null : _showRejectDialog,
+                  const SizedBox(height: 12),
+                  // Reject Button (Red)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: _isProcessing ? null : _showRejectDialog,
+                      icon: const Icon(Icons.cancel_outlined, size: 24),
+                      label: Text(
+                        l10n.rejectBookingButton,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.dangerRed,
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shadowColor: AppTheme.dangerRed.withValues(alpha: 0.3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
                 
@@ -991,6 +1099,32 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
                 if (_userRole == UserRole.tenant && 
                     booking.status == BookingStatus.accepted && 
                     !booking.isPaid) ...[
+                  // Payment Deadline Warning (Yellow)
+                  Container(
+                    padding: const EdgeInsets.all(AppTheme.spacingMD),
+                    decoration: BoxDecoration(
+                      color: AppTheme.warningOrange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                      border: Border.all(color: AppTheme.warningOrange),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: AppTheme.warningOrange),
+                        const SizedBox(width: AppTheme.spacingMD),
+                        Expanded(
+                          child: Text(
+                            l10n.paymentDeadlineWarning,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.warningOrange,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingMD),
+                  // Payment Info (Blue)
                   Container(
                     padding: const EdgeInsets.all(AppTheme.spacingMD),
                     decoration: BoxDecoration(
@@ -1015,8 +1149,7 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
                   AppButton(
                     text: l10n.payNow,
                     icon: Icons.payment,
-                    onPressed: _isProcessing ? null : _handlePayment,
-                    isLoading: _isProcessing,
+                    onPressed: _handlePayment,
                   ),
                 ],
                 
@@ -1085,6 +1218,19 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
         return Icons.close_outlined;
       case BookingStatus.expired:
         return Icons.schedule_outlined;
+    }
+  }
+
+  String _getPropertyTypeLabel(String type, AppLocalizations l10n) {
+    switch (type.toLowerCase()) {
+      case 'villa':
+        return l10n.villa;
+      case 'apartment':
+        return l10n.apartment;
+      case 'chalet':
+        return l10n.chalet;
+      default:
+        return type;
     }
   }
 }

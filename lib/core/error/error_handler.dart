@@ -62,6 +62,18 @@ class ErrorHandler {
             'URL: $method $url\n'
             'Please verify the API endpoint exists on the backend.',
           );
+        } else if (statusCode == 402) {
+          // Payment Required / Payment Failed
+          final message = data is Map<String, dynamic>
+              ? data['detail'] ?? data['message'] ?? 'Payment failed. Please try again.'
+              : 'Payment failed. Please try again.';
+          return ValidationFailure(message.toString());
+        } else if (statusCode == 410) {
+          // Gone - Resource no longer available (e.g., booking not in valid status for payment)
+          final message = data is Map<String, dynamic>
+              ? data['detail'] ?? data['message'] ?? 'This booking cannot be paid. It may not be in a valid status.'
+              : 'This booking cannot be paid. It may not be in a valid status.';
+          return ValidationFailure(message.toString());
         } else if (statusCode == 422) {
           // Validation error - Extract detailed errors
           if (data is Map<String, dynamic>) {
@@ -90,7 +102,13 @@ class ErrorHandler {
           if (data is Map<String, dynamic>) {
             final message = data['detail'] ?? data['message'];
             if (message != null) {
-              serverMessage = '$serverMessage\n\nDetails: $message';
+              final messageStr = message.toString();
+              // Check for database column errors and provide user-friendly message
+              if (messageStr.contains('is_paid') && messageStr.contains('Column not found')) {
+                serverMessage = 'Database configuration error. The booking payment feature requires a database update. Please contact support.';
+              } else {
+                serverMessage = '$serverMessage\n\nDetails: $messageStr';
+              }
             }
           }
           return ServerFailure(serverMessage);

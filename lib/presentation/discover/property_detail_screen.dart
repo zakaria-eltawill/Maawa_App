@@ -148,8 +148,9 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
       },
     );
     
+    final locale = Localizations.localeOf(context);
     final priceFormat = NumberFormat.currency(
-      symbol: 'دل',
+      symbol: locale.languageCode == 'ar' ? 'دل' : 'LYD',
       decimalDigits: 0,
       customPattern: '#,### \u00A4',
     );
@@ -331,6 +332,7 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Container(
                                         width: 50,
@@ -367,6 +369,8 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                                                   fontWeight: FontWeight.w500,
                                                   color: AppTheme.gray700,
                                                 ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ],
                                             if (property.ownerPhone != null && property.ownerPhone!.isNotEmpty) ...[
@@ -379,11 +383,15 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                                                     color: AppTheme.gray600,
                                                   ),
                                                   const SizedBox(width: 4),
-                                                  Text(
-                                                    property.ownerPhone!,
-                                                    style: const TextStyle(
-                                                      fontSize: 13,
-                                                      color: AppTheme.gray600,
+                                                  Flexible(
+                                                    child: Text(
+                                                      property.ownerPhone!,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: AppTheme.gray600,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
                                                     ),
                                                   ),
                                                 ],
@@ -392,42 +400,59 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                                           ],
                                         ),
                                       ),
-                                      if (property.ownerPhone != null && property.ownerPhone!.isNotEmpty)
-                                        Builder(
-                                          builder: (buttonContext) {
-                                            final messenger = ScaffoldMessenger.of(buttonContext);
-                                            return OutlinedButton(
-                                              onPressed: () async {
-                                                final phoneNumber = property.ownerPhone!;
-                                                final uri = Uri.parse('tel:$phoneNumber');
-                                                try {
-                                                  if (await canLaunchUrl(uri)) {
-                                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                                  } else {
-                                                    if (!mounted) return;
-                                                    messenger.showSnackBar(
-                                                      SnackBar(
-                                                        content: Text('Cannot make phone call to $phoneNumber'),
-                                                        backgroundColor: AppTheme.dangerRed,
-                                                      ),
-                                                    );
-                                                  }
-                                                } catch (e) {
+                                    ],
+                                  ),
+                                  if (property.ownerPhone != null && property.ownerPhone!.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    Builder(
+                                      builder: (buttonContext) {
+                                        final messenger = ScaffoldMessenger.of(buttonContext);
+                                        return SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton.icon(
+                                            onPressed: () async {
+                                              final phoneNumber = property.ownerPhone!;
+                                              final uri = Uri.parse('tel:$phoneNumber');
+                                              try {
+                                                if (await canLaunchUrl(uri)) {
+                                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                                } else {
                                                   if (!mounted) return;
                                                   messenger.showSnackBar(
                                                     SnackBar(
-                                                      content: Text('Failed to open phone dialer: $e'),
+                                                      content: Text('Cannot make phone call to $phoneNumber'),
                                                       backgroundColor: AppTheme.dangerRed,
                                                     ),
                                                   );
                                                 }
-                                              },
-                                              child: Text(l10n.contactOwner),
-                                            );
-                                          },
-                                        ),
-                                    ],
-                                  ),
+                                              } catch (e) {
+                                                if (!mounted) return;
+                                                messenger.showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Failed to open phone dialer: $e'),
+                                                    backgroundColor: AppTheme.dangerRed,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            icon: const Icon(Icons.phone, color: Colors.white),
+                                            label: Text(l10n.contactOwner),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppTheme.primaryBlue,
+                                              foregroundColor: Colors.white,
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 24,
+                                                vertical: 16,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

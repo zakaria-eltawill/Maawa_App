@@ -1,7 +1,10 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maawa_project/core/di/providers.dart';
+import 'package:maawa_project/core/error/failures.dart';
 import 'package:maawa_project/core/theme/app_theme.dart';
 import 'package:maawa_project/presentation/widgets/app_button.dart';
 import 'package:maawa_project/presentation/widgets/app_card.dart';
@@ -10,6 +13,7 @@ import 'package:maawa_project/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:maawa_project/core/config/app_config.dart';
+import 'package:maawa_project/domain/entities/booking.dart';
 
 enum PaymentMethod {
   edfaaly,
@@ -69,15 +73,76 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
       return;
     }
 
+    // Get fresh booking data to verify status before payment
+    // Force a refresh to ensure we have the latest status from API
+    ref.invalidate(bookingDetailProvider(widget.bookingId));
+    
+    // Wait a moment for the refresh to complete, then check status
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    // Try to get current booking status
+    final bookingAsync = ref.read(bookingDetailProvider(widget.bookingId));
+    bool shouldProceed = true;
+    
+    bookingAsync.whenOrNull(
+      data: (booking) {
+        if (kDebugMode) {
+          debugPrint('💳 PaymentScreen: Booking status check - Status: ${booking.status}, IsPaid: ${booking.isPaid}');
+        }
+        
+        // Verify booking is in a valid status for payment (ACCEPTED or CONFIRMED)
+        if (booking.status != BookingStatus.accepted && 
+            booking.status != BookingStatus.confirmed) {
+          shouldProceed = false;
+          if (mounted) {
+            ScaffoldMessenger.of(currentContext).showSnackBar(
+              SnackBar(
+                content: Text(
+                  booking.status == BookingStatus.pending
+                      ? 'Booking is still pending owner approval. Please wait for owner to accept.'
+                      : 'This booking cannot be paid in its current status (${booking.status}).',
+                ),
+                backgroundColor: AppTheme.dangerRed,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      },
+    );
+    
+    // If status check failed, don't proceed with payment
+    if (!shouldProceed) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    
+    // Note: Backend will also validate the status, but frontend check provides better UX
+
     setState(() => _isLoading = true);
 
     try {
+      if (kDebugMode) {
+        debugPrint('💳 PaymentScreen: Starting payment for booking ${widget.bookingId}');
+      }
+      
       final processPaymentUseCase = ref.read(processMockPaymentUseCaseProvider);
       
       await processPaymentUseCase(
         bookingId: widget.bookingId,
         fail: false,
       );
+      
+      if (kDebugMode) {
+        debugPrint('✅ PaymentScreen: Payment API call succeeded');
+      }
+
+      // Small delay to ensure backend has processed the payment and updated the database
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      if (kDebugMode) {
+        debugPrint('🔄 PaymentScreen: Invalidating booking providers to refresh data');
+      }
 
       // Invalidate all booking providers to refresh (tenant and owner)
       ref.invalidate(bookingsProvider);
@@ -85,6 +150,16 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
       ref.invalidate(ownerPendingBookingsProvider);
       ref.invalidate(ownerAcceptedBookingsProvider);
       ref.invalidate(ownerRejectedBookingsProvider);
+      // Invalidate the specific booking detail to refresh payment status
+      // This will now fetch fresh data from API (prioritized over cached lists)
+      ref.invalidate(bookingDetailProvider(widget.bookingId));
+      
+      // Force a refresh by reading the provider again to ensure fresh data
+      await ref.read(bookingDetailProvider(widget.bookingId).future);
+      
+      if (kDebugMode) {
+        debugPrint('✅ PaymentScreen: Booking data refreshed after payment');
+      }
 
       if (mounted) {
         // Show success dialog
@@ -100,12 +175,73 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
           Navigator.of(currentContext).pop();
         }
       }
-    } catch (e) {
+    } on Failure catch (failure) {
+      // Handle Failure objects (from ErrorHandler)
       if (mounted) {
+        String errorMessage = failure.message;
+        
+        // Provide user-friendly messages for common payment errors
+        if (errorMessage.contains('410') || 
+            errorMessage.contains('Gone') ||
+            errorMessage.contains('not in ACCEPTED or CONFIRMED')) {
+          errorMessage = 'This booking cannot be paid. The booking status may have changed. Please refresh and try again.';
+        } else if (errorMessage.contains('402') || 
+                   errorMessage.contains('Payment Failed')) {
+          errorMessage = 'Payment processing failed. Please check your payment method and try again.';
+        }
+        
         ScaffoldMessenger.of(currentContext).showSnackBar(
           SnackBar(
-            content: Text(l10n.paymentFailed),
+            content: Text(errorMessage),
             backgroundColor: AppTheme.dangerRed,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } on DioException catch (dioError) {
+      // Handle DioException directly (fallback)
+      if (mounted) {
+        String errorMessage = l10n.paymentFailed;
+        final statusCode = dioError.response?.statusCode;
+        final responseData = dioError.response?.data;
+        
+        if (statusCode == 410) {
+          errorMessage = 'This booking cannot be paid. The booking is not in ACCEPTED or CONFIRMED status. Please refresh and try again.';
+        } else if (statusCode == 402) {
+          errorMessage = 'Payment processing failed. Please try again.';
+        } else if (responseData is Map<String, dynamic>) {
+          final detail = responseData['detail'] ?? responseData['message'];
+          if (detail != null) {
+            errorMessage = detail.toString();
+          }
+        }
+        
+        ScaffoldMessenger.of(currentContext).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: AppTheme.dangerRed,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle any other exceptions
+      if (mounted) {
+        String errorMessage = l10n.paymentFailed;
+        final errorString = e.toString();
+        
+        // Try to extract meaningful error message
+        if (errorString.contains('410') || errorString.contains('Gone')) {
+          errorMessage = 'This booking cannot be paid. The booking status may have changed. Please refresh and try again.';
+        } else if (errorString.contains('402') || errorString.contains('Payment')) {
+          errorMessage = 'Payment processing failed. Please try again.';
+        }
+        
+        ScaffoldMessenger.of(currentContext).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: AppTheme.dangerRed,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -120,8 +256,9 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
   Widget build(BuildContext context) {
     final bookingAsync = ref.watch(bookingDetailProvider(widget.bookingId));
     final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context);
     final priceFormat = NumberFormat.currency(
-      symbol: 'دل',
+      symbol: locale.languageCode == 'ar' ? 'دل' : 'LYD',
       decimalDigits: 0,
       customPattern: '#,### \u00A4',
     );
@@ -209,7 +346,7 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        '${property.propertyType} - ${property.city}',
+                                        '${_getPropertyTypeLabel(property.propertyType, l10n)} - ${property.city}',
                                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                               color: AppTheme.gray600,
                                             ),
@@ -327,8 +464,7 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                               context,
                               PaymentMethod.edfaaly,
                               l10n.edfaaly,
-                              Icons.account_balance_wallet,
-                              Colors.purple,
+                              'assets/images/Edfaaly.png',
                             ),
                             const SizedBox(height: 12),
                             // Mobi Cash Option
@@ -336,8 +472,7 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                               context,
                               PaymentMethod.mobiCash,
                               l10n.mobiCash,
-                              Icons.phone_android,
-                              Colors.green,
+                              'assets/images/MobiCash.png',
                             ),
                           ],
                         ),
@@ -547,10 +682,26 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
     BuildContext context,
     PaymentMethod method,
     String label,
-    IconData icon,
-    Color color,
+    String logoPath,
   ) {
     final isSelected = _selectedPaymentMethod == method;
+    
+    // Determine border color based on payment method
+    final Color borderColor;
+    final Color selectedTextColor;
+    final Color selectedBackgroundColor;
+    
+    if (method == PaymentMethod.edfaaly) {
+      // Green for Edfaaly
+      borderColor = isSelected ? Colors.green : AppTheme.gray300;
+      selectedTextColor = Colors.green.shade700;
+      selectedBackgroundColor = Colors.green.withValues(alpha: 0.05);
+    } else {
+      // Blue for Mobi Cash
+      borderColor = isSelected ? AppTheme.primaryBlue : AppTheme.gray300;
+      selectedTextColor = AppTheme.primaryBlue;
+      selectedBackgroundColor = AppTheme.primaryBlue.withValues(alpha: 0.05);
+    }
 
     return InkWell(
       onTap: () {
@@ -558,37 +709,78 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
           _selectedPaymentMethod = method;
         });
       },
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? AppTheme.primaryBlue : AppTheme.gray300,
-            width: isSelected ? 2 : 1,
+            color: borderColor,
+            width: isSelected ? 2.5 : 1.5,
           ),
-          borderRadius: BorderRadius.circular(12),
-          color: isSelected ? AppTheme.primaryBlue.withValues(alpha: 0.05) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          color: isSelected ? selectedBackgroundColor : Colors.transparent,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: borderColor.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [
+            // Logo Container - Bigger for Mobi Cash
             Container(
-              padding: const EdgeInsets.all(8),
+              width: method == PaymentMethod.mobiCash ? 72 : 56,
+              height: method == PaymentMethod.mobiCash ? 72 : 56,
+              padding: method == PaymentMethod.mobiCash 
+                  ? const EdgeInsets.all(6) 
+                  : const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected ? borderColor.withValues(alpha: 0.3) : AppTheme.gray200,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Image.asset(
+                logoPath,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback icon if image fails to load
+                  return Icon(
+                    method == PaymentMethod.edfaaly
+                        ? Icons.account_balance_wallet
+                        : Icons.phone_android,
+                    color: borderColor,
+                    size: method == PaymentMethod.mobiCash ? 36 : 28,
+                  );
+                },
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
+            // Payment Method Label
             Expanded(
               child: Text(
                 label,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? AppTheme.primaryBlue : AppTheme.gray900,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      color: isSelected ? selectedTextColor : AppTheme.gray900,
+                      fontSize: 16,
                     ),
               ),
             ),
+            // Radio Button
             Radio<PaymentMethod>(
               value: method,
               groupValue: _selectedPaymentMethod,
@@ -597,12 +789,31 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                   _selectedPaymentMethod = value;
                 });
               },
-              activeColor: AppTheme.primaryBlue,
+              activeColor: borderColor,
+              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return borderColor;
+                }
+                return AppTheme.gray400;
+              }),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _getPropertyTypeLabel(String type, AppLocalizations l10n) {
+    switch (type.toLowerCase()) {
+      case 'villa':
+        return l10n.villa;
+      case 'apartment':
+        return l10n.apartment;
+      case 'chalet':
+        return l10n.chalet;
+      default:
+        return type;
+    }
   }
 }
 

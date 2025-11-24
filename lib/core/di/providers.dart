@@ -388,32 +388,72 @@ final selectedBookingProvider = StateProvider<Booking?>((ref) => null);
 
 final bookingDetailProvider =
     FutureProvider.family<Booking, String>((ref, bookingId) async {
-  // First, check if we have the booking in the selected provider (for immediate display)
-  final selectedBooking = ref.read(selectedBookingProvider);
-  if (selectedBooking != null && selectedBooking.id == bookingId) {
-    // Clear the provider after using it (one-time use)
-    Future.microtask(() {
-      ref.read(selectedBookingProvider.notifier).state = null;
-    });
+  // Always try API first to get fresh data (especially important after payment/status changes)
+  // This ensures we get the latest booking status including is_paid
+  try {
+    final useCase = ref.read(getBookingByIdUseCaseProvider);
+    final freshBooking = await useCase(bookingId);
+    if (kDebugMode) {
+      debugPrint('✅ BookingDetailProvider: Fetched fresh booking from API: ${freshBooking.id}, status: ${freshBooking.status}, isPaid: ${freshBooking.isPaid}');
+    }
+    return freshBooking;
+  } catch (apiError) {
+    if (kDebugMode) {
+      debugPrint('⚠️ BookingDetailProvider: API fetch failed, trying cached lists: $apiError');
+    }
     
-    // Try to fetch fresh data from API in the background, but return cached data immediately
-    // This ensures we show data immediately while refreshing in the background
+    // If API fails, fall back to cached lists
+    Booking? bookingFromList;
+    
     try {
-      final useCase = ref.read(getBookingByIdUseCaseProvider);
-      final freshBooking = await useCase(bookingId);
-      return freshBooking;
-    } catch (e) {
-      // If API call fails, return the cached booking
+      // Try tenant bookings first
+      final bookingsFuture = ref.read(bookingsProvider.future);
+      final bookings = await bookingsFuture;
+      bookingFromList = bookings.firstWhere(
+        (b) => b.id == bookingId,
+        orElse: () => throw StateError('Booking not in tenant list'),
+      );
       if (kDebugMode) {
-        debugPrint('⚠️ BookingDetailProvider: Failed to fetch fresh booking, using cached: $e');
+        debugPrint('✅ BookingDetailProvider: Found booking in tenant list');
       }
+    } catch (e) {
+      // Not in tenant list, try owner bookings
+      try {
+        final ownerBookingsFuture = ref.read(ownerBookingsProvider.future);
+        final ownerBookings = await ownerBookingsFuture;
+        bookingFromList = ownerBookings.firstWhere(
+          (b) => b.id == bookingId,
+          orElse: () => throw StateError('Booking not in owner list'),
+        );
+        if (kDebugMode) {
+          debugPrint('✅ BookingDetailProvider: Found booking in owner list');
+        }
+      } catch (e2) {
+        // Not in either list
+        bookingFromList = null;
+      }
+    }
+    
+    if (bookingFromList != null) {
+      return bookingFromList;
+    }
+    
+    // Last resort: try selectedBookingProvider
+    final selectedBooking = ref.read(selectedBookingProvider);
+    if (selectedBooking != null && selectedBooking.id == bookingId) {
+      if (kDebugMode) {
+        debugPrint('⚠️ BookingDetailProvider: Using selectedBookingProvider as fallback');
+      }
+      // Clear the provider after using it (one-time use)
+      Future.microtask(() {
+        ref.read(selectedBookingProvider.notifier).state = null;
+      });
       return selectedBooking;
     }
+    
+    // Re-throw if no fallback available
+    rethrow;
   }
-  
-  // No cached booking, fetch from API
-  final useCase = ref.read(getBookingByIdUseCaseProvider);
-  return await useCase(bookingId);
 });
 
 // Router

@@ -122,8 +122,24 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
     }
   }
 
-  String _getStatusLabel(BookingStatus status) {
-    return status.name.toUpperCase();
+  String _getStatusLabel(BookingStatus status, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    switch (status) {
+      case BookingStatus.pending:
+        return l10n.statusPending;
+      case BookingStatus.accepted:
+        return l10n.statusAccepted;
+      case BookingStatus.confirmed:
+        return l10n.statusConfirmed;
+      case BookingStatus.completed:
+        return l10n.statusCompleted;
+      case BookingStatus.rejected:
+        return l10n.statusRejected;
+      case BookingStatus.canceled:
+        return l10n.statusCanceled;
+      case BookingStatus.expired:
+        return l10n.statusExpired;
+    }
   }
 
   Widget _buildPropertyImage(Booking booking) {
@@ -211,9 +227,10 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
   Widget build(BuildContext context) {
     final booking = widget.booking;
     final dateFormat = DateFormat('MMM dd, yyyy');
+    final locale = Localizations.localeOf(context);
     final priceFormat = NumberFormat.currency(
-      locale: 'ar_LY',
-      symbol: 'د.ل',
+      locale: locale.languageCode == 'ar' ? 'ar_LY' : 'en_US',
+      symbol: locale.languageCode == 'ar' ? 'د.ل' : 'LYD',
       decimalDigits: 2,
     );
 
@@ -225,8 +242,9 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
       child: AppCard(
         child: InkWell(
           onTap: () {
-            // Store booking in provider before navigating (backend doesn't have get-by-id endpoint)
+            // Store booking in provider as fallback before navigating
             ref.read(selectedBookingProvider.notifier).state = booking;
+            // Navigate to booking detail - provider will use list booking first, then refresh from API
             context.push('/home/booking/${booking.id}');
           },
           borderRadius: BorderRadius.circular(12),
@@ -270,7 +288,7 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                _getStatusLabel(booking.status),
+                                _getStatusLabel(booking.status, context),
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                       color: _getStatusColor(booking.status),
                                       fontWeight: FontWeight.w600,
@@ -324,7 +342,7 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
                 if (showPayButton) ...[
                   const SizedBox(height: 12),
                   AppButton(
-                    text: 'Pay Now',
+                    text: AppLocalizations.of(context).payNow,
                     icon: Icons.payment,
                     onPressed: _isProcessing ? null : _handlePayment,
                     isLoading: _isProcessing,

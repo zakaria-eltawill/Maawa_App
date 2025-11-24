@@ -84,6 +84,13 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
     }
   }
 
+  String _getPriceText(num price, {bool showPlus = false}) {
+    final locale = Localizations.localeOf(context);
+    final symbol = locale.languageCode == 'ar' ? 'د.ل' : 'LYD';
+    final priceText = price.toStringAsFixed(0);
+    return showPlus ? '$priceText+ $symbol' : '$priceText $symbol';
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -240,7 +247,7 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${_priceRange.start.round()} د.ل',
+                              _getPriceText(_priceRange.start.round()),
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
@@ -264,8 +271,8 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
                             const SizedBox(height: 4),
                             Text(
                               _priceRange.end >= 10000
-                                  ? '10000+ د.ل'
-                                  : '${_priceRange.end.round()} د.ل',
+                                  ? _getPriceText(10000, showPlus: true)
+                                  : _getPriceText(_priceRange.end.round()),
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
@@ -288,10 +295,10 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
                     activeColor: AppTheme.primaryBlue,
                     inactiveColor: AppTheme.gray300,
                     labels: RangeLabels(
-                      '${_priceRange.start.round()} د.ل',
+                      _getPriceText(_priceRange.start.round()),
                       _priceRange.end >= 10000
-                          ? '10000+'
-                          : '${_priceRange.end.round()} د.ل',
+                          ? _getPriceText(10000, showPlus: true)
+                          : _getPriceText(_priceRange.end.round()),
                     ),
                     onChanged: (RangeValues values) {
                       setState(() {

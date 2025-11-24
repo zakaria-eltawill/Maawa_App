@@ -120,6 +120,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get selectRegion => 'اختر المنطقة';
 
   @override
+  String get role => 'الدور';
+
+  @override
   String get rememberMe => 'تذكرني';
 
   @override
@@ -371,6 +374,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'تم قبول حجزك! أكمل الدفع لتأكيد إقامتك.';
 
   @override
+  String get paymentDeadlineWarning =>
+      'اذا لم يتم الدفع خلال اربع ساعات من وقت قبول طلب حجزك سيتم الغاء الحجز';
+
+  @override
   String get payment => 'الدفع';
 
   @override
@@ -534,6 +541,33 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cancelled => 'ملغي';
+
+  @override
+  String get canceled => 'ملغي';
+
+  @override
+  String get expired => 'منتهي';
+
+  @override
+  String get statusPending => 'قيد الانتظار';
+
+  @override
+  String get statusAccepted => 'مقبول';
+
+  @override
+  String get statusConfirmed => 'مؤكد';
+
+  @override
+  String get statusCompleted => 'مكتمل';
+
+  @override
+  String get statusRejected => 'مرفوض';
+
+  @override
+  String get statusCanceled => 'ملغي';
+
+  @override
+  String get statusExpired => 'منتهي';
 
   @override
   String get createProposal => 'إنشاء اقتراح';

@@ -120,6 +120,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectRegion => 'Select Region';
 
   @override
+  String get role => 'Role';
+
+  @override
   String get rememberMe => 'Remember Me';
 
   @override
@@ -373,6 +376,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your booking has been accepted! Complete payment to confirm your stay.';
 
   @override
+  String get paymentDeadlineWarning =>
+      'If the payment is not made within four hours from the time of accepting your reservation request, the reservation will be cancelled.';
+
+  @override
   String get payment => 'Payment';
 
   @override
@@ -538,6 +545,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancelled => 'Cancelled';
+
+  @override
+  String get canceled => 'Canceled';
+
+  @override
+  String get expired => 'Expired';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusAccepted => 'Accepted';
+
+  @override
+  String get statusConfirmed => 'Confirmed';
+
+  @override
+  String get statusCompleted => 'Completed';
+
+  @override
+  String get statusRejected => 'Rejected';
+
+  @override
+  String get statusCanceled => 'Canceled';
+
+  @override
+  String get statusExpired => 'Expired';
 
   @override
   String get createProposal => 'Create Proposal';
