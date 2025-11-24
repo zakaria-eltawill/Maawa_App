@@ -596,24 +596,37 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                           
                           // Map button
                           if (property.mapUrl.isNotEmpty)
-                            AppButton(
-                              text: l10n.viewOnMap,
-                              icon: Icons.map_outlined,
-                              isOutlined: true,
-                              onPressed: () async {
-                                final uri = Uri.parse(property.mapUrl);
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                } else {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Could not open map'),
-                                      ),
-                                    );
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final uri = Uri.parse(property.mapUrl);
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  } else {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Could not open map'),
+                                        ),
+                                      );
+                                    }
                                   }
-                                }
-                              },
+                                },
+                                icon: const Icon(Icons.map_outlined),
+                                label: Text(l10n.viewOnMap),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.primaryBlue,
+                                  side: BorderSide(color: AppTheme.primaryBlue, width: 1.5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
                             ),
                           
                           const SizedBox(height: 100), // Space for bottom button
