@@ -226,6 +226,7 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
   @override
   Widget build(BuildContext context) {
     final booking = widget.booking;
+    final l10n = AppLocalizations.of(context);
     final dateFormat = DateFormat('MMM dd, yyyy');
     final locale = Localizations.localeOf(context);
     final priceFormat = NumberFormat.currency(
@@ -363,7 +364,7 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
                         Icon(Icons.check_circle, color: AppTheme.successGreen, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Paid',
+                          l10n.paid,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: AppTheme.successGreen,
                                 fontWeight: FontWeight.w600,

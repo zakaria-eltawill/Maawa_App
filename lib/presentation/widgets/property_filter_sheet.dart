@@ -35,6 +35,26 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
     'Tobruk',
   ];
 
+  // Arabic city names mapping
+  final Map<String, String> _cityNamesAr = {
+    'Benghazi': 'بنغازي',
+    'Tripoli': 'طرابلس',
+    'Misrata': 'مصراتة',
+    'Zliten': 'زليتن',
+    'Al-Bayda': 'البيضاء',
+    'Sirte': 'سرت',
+    'Derna': 'درنة',
+    'Tobruk': 'طبرق',
+  };
+
+  String _getCityDisplayName(String city) {
+    final locale = Localizations.localeOf(context);
+    if (locale.languageCode == 'ar') {
+      return _cityNamesAr[city] ?? city;
+    }
+    return city;
+  }
+
   final List<String> _propertyTypes = [
     'villa',
     'apartment',
@@ -157,7 +177,7 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
                     children: _cities.map((city) {
                       final isSelected = _selectedCity == city;
                       return FilterChip(
-                        label: Text(city),
+                        label: Text(_getCityDisplayName(city)),
                         selected: isSelected,
                         onSelected: (selected) {
                           setState(() {

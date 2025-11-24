@@ -911,7 +911,7 @@ class _OwnerBookingCardState extends ConsumerState<_OwnerBookingCard> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              booking.isPaid ? 'Paid' : 'Unpaid',
+                              booking.isPaid ? l10n.paid : l10n.unpaid,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: booking.isPaid
                                         ? AppTheme.successGreen
