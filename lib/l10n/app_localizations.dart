@@ -1850,6 +1850,66 @@ abstract class AppLocalizations {
   /// **'لا يوجد تقييم ومراجعات بعد'**
   String get noRatingAndReviews;
 
+  /// No description provided for @rateYourExperience.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيم تجربتك'**
+  String get rateYourExperience;
+
+  /// No description provided for @comment.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعليق'**
+  String get comment;
+
+  /// No description provided for @shareYourExperience.
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك تجربتك...'**
+  String get shareYourExperience;
+
+  /// No description provided for @skip.
+  ///
+  /// In ar, this message translates to:
+  /// **'تخطي'**
+  String get skip;
+
+  /// No description provided for @reviewSubmitted.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إرسال التقييم!'**
+  String get reviewSubmitted;
+
+  /// No description provided for @thankYouForReview.
+  ///
+  /// In ar, this message translates to:
+  /// **'شكراً لمشاركة تجربتك'**
+  String get thankYouForReview;
+
+  /// No description provided for @failedToSubmitReview.
+  ///
+  /// In ar, this message translates to:
+  /// **'فشل إرسال التقييم'**
+  String get failedToSubmitReview;
+
+  /// No description provided for @reviewOnlyAfterStay.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمكنك تقييم العقارات فقط بعد إكمال الإقامة'**
+  String get reviewOnlyAfterStay;
+
+  /// No description provided for @propertyNotFound.
+  ///
+  /// In ar, this message translates to:
+  /// **'العقار غير موجود'**
+  String get propertyNotFound;
+
+  /// No description provided for @invalidReviewData.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيانات التقييم غير صحيحة. يرجى التحقق من المدخلات.'**
+  String get invalidReviewData;
+
   /// No description provided for @dateUnavailable.
   ///
   /// In ar, this message translates to:
@@ -2521,6 +2581,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'فشل تحميل الاقتراح'**
   String get failedToLoadProposal;
+
+  /// No description provided for @sendCode.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال الرمز'**
+  String get sendCode;
+
+  /// No description provided for @enterCode.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل الرمز'**
+  String get enterCode;
+
+  /// No description provided for @invalidCode.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز يجب أن يكون 4 أو 6 أرقام'**
+  String get invalidCode;
 }
 
 class _AppLocalizationsDelegate

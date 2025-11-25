@@ -11,18 +11,56 @@ import 'package:maawa_project/domain/entities/user.dart';
 import 'package:maawa_project/presentation/widgets/app_button.dart';
 import 'package:maawa_project/presentation/widgets/app_card.dart';
 import 'package:maawa_project/presentation/widgets/success_dialog.dart';
+import 'package:maawa_project/presentation/widgets/rating_review_dialog.dart';
 import 'package:maawa_project/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class BookingDetailScreen extends ConsumerWidget {
+class BookingDetailScreen extends ConsumerStatefulWidget {
   final String bookingId;
 
   const BookingDetailScreen({
     super.key,
     required this.bookingId,
   });
+
+  @override
+  ConsumerState<BookingDetailScreen> createState() => _BookingDetailScreenState();
+}
+
+class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Check for completed booking after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForCompletedBooking();
+    });
+  }
+
+  Future<void> _checkForCompletedBooking() async {
+    final bookingAsync = ref.read(bookingDetailProvider(widget.bookingId));
+    await bookingAsync.when(
+      data: (booking) async {
+        // Check if booking is completed and hasn't been reviewed
+        if (booking.isCompleted && booking.propertyName != null) {
+          final hasBeenReviewed = await hasBookingBeenReviewed(booking.id);
+          if (!hasBeenReviewed && mounted) {
+            // Show dialog for this booking
+            await RatingReviewDialog.show(
+              context,
+              propertyId: booking.propertyId,
+              bookingId: booking.id,
+              propertyName: booking.propertyName!,
+            );
+          }
+        }
+      },
+      loading: () {},
+      error: (_, __) {},
+    );
+  }
 
   Color _getStatusColor(BookingStatus status) {
     switch (status) {
@@ -63,9 +101,9 @@ class BookingDetailScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     // Use getBookingById which works for both roles
-    final bookingAsync = ref.watch(bookingDetailProvider(bookingId));
+    final bookingAsync = ref.watch(bookingDetailProvider(widget.bookingId));
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
@@ -79,19 +117,30 @@ class BookingDetailScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              ref.invalidate(bookingDetailProvider(bookingId));
+              ref.invalidate(bookingDetailProvider(widget.bookingId));
               ref.invalidate(propertyDetailProvider);
+              // Check for completed booking after refresh
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (mounted) {
+                  _checkForCompletedBooking();
+                }
+              });
             },
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(bookingDetailProvider(bookingId));
+          ref.invalidate(bookingDetailProvider(widget.bookingId));
           // Also refresh property detail if needed
           final booking = bookingAsync.valueOrNull;
           if (booking != null) {
             ref.invalidate(propertyDetailProvider(booking.propertyId));
+          }
+          // Check for completed booking after refresh
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            _checkForCompletedBooking();
           }
         },
         child: bookingAsync.when(

@@ -327,6 +327,16 @@
   "submitReview": "Submit Review",
   "noReviews": "No reviews yet",
   "noRatingAndReviews": "No rating and reviews yet",
+  "rateYourExperience": "Rate Your Experience",
+  "comment": "Comment",
+  "shareYourExperience": "Share your experience...",
+  "skip": "Skip",
+  "reviewSubmitted": "Review Submitted!",
+  "thankYouForReview": "Thank you for sharing your experience",
+  "failedToSubmitReview": "Failed to submit review",
+  "reviewOnlyAfterStay": "You can only review properties after completing a stay",
+  "propertyNotFound": "Property not found",
+  "invalidReviewData": "Invalid review data. Please check your input.",
   "dateUnavailable": "This date is unavailable",
   "dateUnavailableMessage": "This date is already booked or reserved. Please choose a different date.",
   "ago": "ago",
@@ -447,6 +457,10 @@
   "submitted": "Submitted",
   "lastUpdated": "Last Updated",
   "adminNotes": "Admin Notes",
-  "failedToLoadProposal": "Failed to load proposal"
+  "failedToLoadProposal": "Failed to load proposal",
+  
+  "sendCode": "Send Code",
+  "enterCode": "Enter the code",
+  "invalidCode": "Code must be 4 or 6 digits"
 }
 

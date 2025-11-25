@@ -906,6 +906,38 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noRatingAndReviews => 'لا يوجد تقييم ومراجعات بعد';
 
   @override
+  String get rateYourExperience => 'قيم تجربتك';
+
+  @override
+  String get comment => 'تعليق';
+
+  @override
+  String get shareYourExperience => 'شارك تجربتك...';
+
+  @override
+  String get skip => 'تخطي';
+
+  @override
+  String get reviewSubmitted => 'تم إرسال التقييم!';
+
+  @override
+  String get thankYouForReview => 'شكراً لمشاركة تجربتك';
+
+  @override
+  String get failedToSubmitReview => 'فشل إرسال التقييم';
+
+  @override
+  String get reviewOnlyAfterStay =>
+      'يمكنك تقييم العقارات فقط بعد إكمال الإقامة';
+
+  @override
+  String get propertyNotFound => 'العقار غير موجود';
+
+  @override
+  String get invalidReviewData =>
+      'بيانات التقييم غير صحيحة. يرجى التحقق من المدخلات.';
+
+  @override
   String get dateUnavailable => 'هذا التاريخ غير متاح';
 
   @override
@@ -1263,4 +1295,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get failedToLoadProposal => 'فشل تحميل الاقتراح';
+
+  @override
+  String get sendCode => 'إرسال الرمز';
+
+  @override
+  String get enterCode => 'أدخل الرمز';
+
+  @override
+  String get invalidCode => 'الرمز يجب أن يكون 4 أو 6 أرقام';
 }

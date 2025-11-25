@@ -327,6 +327,16 @@
   "submitReview": "إرسال التقييم",
   "noReviews": "لا توجد تقييمات بعد",
   "noRatingAndReviews": "لا يوجد تقييم ومراجعات بعد",
+  "rateYourExperience": "قيم تجربتك",
+  "comment": "تعليق",
+  "shareYourExperience": "شارك تجربتك...",
+  "skip": "تخطي",
+  "reviewSubmitted": "تم إرسال التقييم!",
+  "thankYouForReview": "شكراً لمشاركة تجربتك",
+  "failedToSubmitReview": "فشل إرسال التقييم",
+  "reviewOnlyAfterStay": "يمكنك تقييم العقارات فقط بعد إكمال الإقامة",
+  "propertyNotFound": "العقار غير موجود",
+  "invalidReviewData": "بيانات التقييم غير صحيحة. يرجى التحقق من المدخلات.",
   "dateUnavailable": "هذا التاريخ غير متاح",
   "dateUnavailableMessage": "هذا التاريخ محجوز بالفعل. يرجى اختيار تاريخ آخر.",
   "ago": "منذ",
@@ -447,6 +457,10 @@
   "submitted": "تم الإرسال",
   "lastUpdated": "آخر تحديث",
   "adminNotes": "ملاحظات الإدارة",
-  "failedToLoadProposal": "فشل تحميل الاقتراح"
+  "failedToLoadProposal": "فشل تحميل الاقتراح",
+  
+  "sendCode": "إرسال الرمز",
+  "enterCode": "أدخل الرمز",
+  "invalidCode": "الرمز يجب أن يكون 4 أو 6 أرقام"
 }
 

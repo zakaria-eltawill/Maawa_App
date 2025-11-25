@@ -82,6 +82,29 @@ class Booking extends Equatable {
     required this.timeline,
   });
 
+  /// Check if booking should be considered completed based on checkOut date
+  /// A booking is considered completed if:
+  /// - checkOut date has passed (today is after checkOut date)
+  /// - AND status is either confirmed or accepted (not already completed/rejected/canceled)
+  bool get shouldBeCompleted {
+    final now = DateTime.now();
+    final checkOutDate = DateTime(checkOut.year, checkOut.month, checkOut.day);
+    final today = DateTime(now.year, now.month, now.day);
+    
+    // Check if checkOut date has passed
+    final isCheckOutPassed = today.isAfter(checkOutDate);
+    
+    // Only consider bookings that are confirmed or accepted (not already completed/rejected/canceled)
+    final isEligibleStatus = status == BookingStatus.confirmed || status == BookingStatus.accepted;
+    
+    return isCheckOutPassed && isEligibleStatus;
+  }
+
+  /// Check if booking is actually completed (either status is completed or should be completed)
+  bool get isCompleted {
+    return status == BookingStatus.completed || shouldBeCompleted;
+  }
+
   @override
   List<Object?> get props => [
         id,

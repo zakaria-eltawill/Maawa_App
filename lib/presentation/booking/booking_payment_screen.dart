@@ -35,12 +35,14 @@ class BookingPaymentScreen extends ConsumerStatefulWidget {
 class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
   PaymentMethod? _selectedPaymentMethod;
   final _phoneNumberController = TextEditingController();
+  final _codeController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
   @override
   void dispose() {
     _phoneNumberController.dispose();
+    _codeController.dispose();
     super.dispose();
   }
 
@@ -532,6 +534,60 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                                   borderSide: BorderSide(color: AppTheme.gray300),
                                 ),
                               ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Send Code Button
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  // Mock functionality - just show a message
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(l10n.sendCode),
+                                      backgroundColor: AppTheme.primaryBlue,
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.send),
+                                label: Text(l10n.sendCode),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.primaryBlue,
+                                  side: const BorderSide(color: AppTheme.primaryBlue, width: 1.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Code Input Field
+                            TextFormField(
+                              controller: _codeController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(6),
+                              ],
+                              decoration: InputDecoration(
+                                labelText: l10n.enterCode,
+                                hintText: l10n.enterCode,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                prefixIcon: const Icon(Icons.lock_outline),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return null; // Optional field
+                                }
+                                if (value.length != 4 && value.length != 6) {
+                                  return l10n.invalidCode;
+                                }
+                                return null;
+                              },
                             ),
                           ],
                         ),

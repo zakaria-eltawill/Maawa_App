@@ -10,14 +10,56 @@ import 'package:maawa_project/presentation/widgets/error_state.dart';
 import 'package:maawa_project/presentation/widgets/shimmer_loading.dart';
 import 'package:maawa_project/presentation/widgets/app_button.dart';
 import 'package:maawa_project/presentation/widgets/app_card.dart';
+import 'package:maawa_project/presentation/widgets/rating_review_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class TenantBookingsScreen extends ConsumerWidget {
+class TenantBookingsScreen extends ConsumerStatefulWidget {
   const TenantBookingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TenantBookingsScreen> createState() => _TenantBookingsScreenState();
+}
+
+class _TenantBookingsScreenState extends ConsumerState<TenantBookingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Check for completed bookings after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForCompletedBookings();
+    });
+  }
+
+  Future<void> _checkForCompletedBookings() async {
+    final bookingsAsync = ref.read(bookingsProvider);
+    await bookingsAsync.when(
+      data: (bookings) async {
+        // Find the first completed booking that hasn't been reviewed
+        for (final booking in bookings) {
+          if (booking.isCompleted && booking.propertyName != null) {
+            final hasBeenReviewed = await hasBookingBeenReviewed(booking.id);
+            if (!hasBeenReviewed && mounted) {
+              // Show dialog for this booking
+              await RatingReviewDialog.show(
+                context,
+                propertyId: booking.propertyId,
+                bookingId: booking.id,
+                propertyName: booking.propertyName!,
+              );
+              // Only show one dialog at a time
+              break;
+            }
+          }
+        }
+      },
+      loading: () {},
+      error: (_, __) {},
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final bookingsAsync = ref.watch(bookingsProvider);
     final l10n = AppLocalizations.of(context);
 
@@ -28,6 +70,11 @@ class TenantBookingsScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(bookingsProvider);
+          // Check for completed bookings after refresh
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            _checkForCompletedBookings();
+          }
         },
         child: bookingsAsync.when(
           data: (bookings) {

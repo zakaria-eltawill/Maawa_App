@@ -911,6 +911,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noRatingAndReviews => 'No rating and reviews yet';
 
   @override
+  String get rateYourExperience => 'Rate Your Experience';
+
+  @override
+  String get comment => 'Comment';
+
+  @override
+  String get shareYourExperience => 'Share your experience...';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String get reviewSubmitted => 'Review Submitted!';
+
+  @override
+  String get thankYouForReview => 'Thank you for sharing your experience';
+
+  @override
+  String get failedToSubmitReview => 'Failed to submit review';
+
+  @override
+  String get reviewOnlyAfterStay =>
+      'You can only review properties after completing a stay';
+
+  @override
+  String get propertyNotFound => 'Property not found';
+
+  @override
+  String get invalidReviewData =>
+      'Invalid review data. Please check your input.';
+
+  @override
   String get dateUnavailable => 'This date is unavailable';
 
   @override
@@ -1269,4 +1301,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get failedToLoadProposal => 'Failed to load proposal';
+
+  @override
+  String get sendCode => 'Send Code';
+
+  @override
+  String get enterCode => 'Enter the code';
+
+  @override
+  String get invalidCode => 'Code must be 4 or 6 digits';
 }

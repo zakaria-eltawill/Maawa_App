@@ -131,68 +131,45 @@ class _PropertyListScreenState extends ConsumerState<PropertyListScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Greeting
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            userAsync.when(
-                              data: (user) {
-                                final userName = user.name;
-                                final greeting = locale.languageCode == 'ar'
-                                    ? '${l10n.hello} $userName 👋'
-                                    : 'Hi $userName 👋';
-                                return Text(
-                                  greeting,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white70,
-                                  ),
-                                );
-                              },
-                              loading: () => Text(
-                                '${l10n.hello} 👋',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              error: (_, __) => Text(
-                                '${l10n.hello} 👋',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              l10n.featuredProperties,
+                        userAsync.when(
+                          data: (user) {
+                            final userName = user.name;
+                            final greeting = locale.languageCode == 'ar'
+                                ? '${l10n.hello} $userName 👋'
+                                : 'Hi $userName 👋';
+                            return Text(
+                              greeting,
                               style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                fontSize: 16,
+                                color: Colors.white70,
                               ),
-                            ),
-                          ],
-                        ),
-                        InkWell(
-                          onTap: () {
-                            context.push('/home/notifications');
+                            );
                           },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
+                          loading: () => Text(
+                            '${l10n.hello} 👋',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
                             ),
-                            child: const Icon(
-                              Icons.notifications_outlined,
-                              color: Colors.white,
-                              size: 24,
+                          ),
+                          error: (_, __) => Text(
+                            '${l10n.hello} 👋',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
                             ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.featuredProperties,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ],

@@ -254,48 +254,6 @@ class ProfileScreen extends ConsumerWidget {
                         const Divider(height: 24),
                         InkWell(
                           onTap: () {
-                            context.push('/home/notifications');
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryBlue.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.notifications_outlined,
-                                    size: 20,
-                                    color: AppTheme.primaryBlue,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    l10n.notifications,
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      color: AppTheme.gray900,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.chevron_left,
-                                  color: AppTheme.gray400,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const Divider(height: 24),
-                        InkWell(
-                          onTap: () {
                             _showLanguageDialog(context, ref);
                           },
                           borderRadius: BorderRadius.circular(12),
@@ -448,11 +406,22 @@ class ProfileScreen extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                  child: AppButton(
-                    text: l10n.logout,
-                    icon: Icons.logout,
-                    isOutlined: true,
-                    onPressed: () => _handleLogout(context, ref),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleLogout(context, ref),
+                      icon: const Icon(Icons.logout),
+                      label: Text(l10n.logout),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.dangerRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
                   ),
                 ),
               ),
