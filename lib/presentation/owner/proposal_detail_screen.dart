@@ -56,6 +56,19 @@ class ProposalDetailScreen extends ConsumerWidget {
     }
   }
 
+  String _getPropertyTypeLabel(String type, AppLocalizations l10n) {
+    switch (type.toLowerCase()) {
+      case 'villa':
+        return l10n.villa;
+      case 'apartment':
+        return l10n.apartment;
+      case 'chalet':
+        return l10n.chalet;
+      default:
+        return type;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final proposalAsync = ref.watch(proposalDetailProvider(proposalId));
@@ -152,7 +165,7 @@ class ProposalDetailScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Property Details',
+                          l10n.propertyDetails,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -167,16 +180,23 @@ class ProposalDetailScreen extends ConsumerWidget {
                           const SizedBox(height: AppTheme.spacingMD),
                           _InfoRow(
                             icon: Icons.category,
-                            label: 'Type',
-                            value: proposalData.propertyType!,
+                            label: l10n.type,
+                            value: _getPropertyTypeLabel(proposalData.propertyType!, l10n),
                           ),
                         ],
                         if (proposalData.pricePerNight != null) ...[
                           const SizedBox(height: AppTheme.spacingMD),
-                          _InfoRow(
-                            icon: Icons.attach_money,
-                            label: l10n.pricePerNight,
-                            value: '${proposalData.pricePerNight} دل / ليلة',
+                          Builder(
+                            builder: (context) {
+                              final locale = Localizations.localeOf(context);
+                              final symbol = locale.languageCode == 'ar' ? 'دل' : 'LYD';
+                              final nightLabel = locale.languageCode == 'ar' ? 'ليلة' : 'night';
+                              return _InfoRow(
+                                icon: Icons.attach_money,
+                                label: l10n.pricePerNight,
+                                value: '${proposalData.pricePerNight} $symbol / $nightLabel',
+                              );
+                            },
                           ),
                         ],
                         if (proposalData.amenities != null && proposalData.amenities!.isNotEmpty) ...[
@@ -270,7 +290,7 @@ class ProposalDetailScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Submission Information',
+                        l10n.submissionInformation,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -278,14 +298,14 @@ class ProposalDetailScreen extends ConsumerWidget {
                       const SizedBox(height: AppTheme.spacingMD),
                       _InfoRow(
                         icon: Icons.calendar_today,
-                        label: 'Submitted',
+                        label: l10n.submitted,
                         value: dateFormat.format(proposal.createdAt),
                       ),
                       if (proposal.updatedAt != null) ...[
                         const SizedBox(height: AppTheme.spacingMD),
                         _InfoRow(
                           icon: Icons.update,
-                          label: 'Last Updated',
+                          label: l10n.lastUpdated,
                           value: dateFormat.format(proposal.updatedAt!),
                         ),
                       ],
@@ -301,7 +321,7 @@ class ProposalDetailScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Admin Notes',
+                          l10n.adminNotes,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.dangerRed,
@@ -384,7 +404,7 @@ class ProposalDetailScreen extends ConsumerWidget {
                   const Icon(Icons.error_outline, size: 64, color: AppTheme.dangerRed),
                   const SizedBox(height: 16),
                   Text(
-                    'Failed to load proposal',
+                    l10n.failedToLoadProposal,
                     style: Theme.of(context).textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
@@ -398,7 +418,7 @@ class ProposalDetailScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                   AppButton(
-                    text: 'Go Back',
+                    text: l10n.goBack,
                     onPressed: () => context.pop(),
                   ),
                 ],

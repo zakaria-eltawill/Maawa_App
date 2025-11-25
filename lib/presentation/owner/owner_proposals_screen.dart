@@ -323,15 +323,19 @@ class _ProposalCard extends StatelessWidget {
                 children: [
                   Icon(Icons.calendar_today_outlined, size: 16, color: AppTheme.gray600),
                   const SizedBox(width: 8),
-                  Text(
-                    'Submitted: ${dateFormat.format(proposal.createdAt)}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.gray600,
-                        ),
+                  Flexible(
+                    child: Text(
+                      '${l10n.submitted}: ${dateFormat.format(proposal.createdAt)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.gray600,
+                          ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
-                  const Spacer(),
                   // Edit icon button - only show for PENDING or REJECTED proposals
-                  if (onEdit != null && (proposal.status == ProposalStatus.pending || proposal.status == ProposalStatus.rejected))
+                  if (onEdit != null && (proposal.status == ProposalStatus.pending || proposal.status == ProposalStatus.rejected)) ...[
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: Icon(Icons.edit_outlined, size: 20, color: AppTheme.primaryBlue),
                       onPressed: () {
@@ -341,10 +345,10 @@ class _ProposalCard extends StatelessWidget {
                       constraints: const BoxConstraints(),
                       tooltip: l10n.proposalEdit,
                     ),
+                  ],
                   // Delete icon button - only show for PENDING or REJECTED proposals
                   if (onDelete != null && (proposal.status == ProposalStatus.pending || proposal.status == ProposalStatus.rejected)) ...[
-                    if (onEdit != null && (proposal.status == ProposalStatus.pending || proposal.status == ProposalStatus.rejected))
-                      const SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: Icon(Icons.delete_outline, size: 20, color: AppTheme.dangerRed),
                       onPressed: () {

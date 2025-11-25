@@ -435,6 +435,18 @@
   "onboardingPage3Title": "إدارة حجوزاتك",
   "onboardingPage3Description": "تابع جميع حجوزاتك من مكان واحد. احصل على تحديثات فورية حول حالة حجزك وادفع بسهولة.",
   "onboardingGetStarted": "ابدأ الآن",
-  "onboardingSkip": "تخطي"
+  "onboardingSkip": "تخطي",
+  
+  "propertyStatistics": "إحصائيات العقار",
+  "bookingsLabel": "الحجوزات",
+  "totalRevenue": "إجمالي الإيرادات",
+  "ratingsLabel": "التقييمات",
+  "averageRating": "متوسط التقييم",
+  "type": "النوع",
+  "submissionInformation": "معلومات الإرسال",
+  "submitted": "تم الإرسال",
+  "lastUpdated": "آخر تحديث",
+  "adminNotes": "ملاحظات الإدارة",
+  "failedToLoadProposal": "فشل تحميل الاقتراح"
 }
 

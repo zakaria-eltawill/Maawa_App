@@ -464,7 +464,7 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'إحصائيات العقار',
+                                    l10n.propertyStatistics,
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
@@ -477,7 +477,7 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.calendar_today,
-                                          label: 'الحجوزات',
+                                          label: l10n.bookingsLabel,
                                           value: (property.bookingsCount ?? 0).toString(),
                                           color: AppTheme.primaryBlue,
                                         ),
@@ -486,7 +486,7 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.attach_money,
-                                          label: 'إجمالي الإيرادات',
+                                          label: l10n.totalRevenue,
                                           value: priceFormat.format(property.totalRevenue ?? 0),
                                           color: AppTheme.successGreen,
                                         ),
@@ -499,7 +499,7 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                                       Expanded(
                                         child: _buildStatCard(
                                           icon: Icons.star,
-                                          label: 'التقييمات',
+                                          label: l10n.ratingsLabel,
                                           value: (property.reviewCount ?? 0).toString(),
                                           color: AppTheme.goldYellow,
                                         ),
@@ -509,7 +509,7 @@ class _PropertyDetailScreenState extends ConsumerState<PropertyDetailScreen> {
                                         Expanded(
                                           child: _buildStatCard(
                                             icon: Icons.star_rate,
-                                            label: 'متوسط التقييم',
+                                            label: l10n.averageRating,
                                             value: property.averageRating!.toStringAsFixed(1),
                                             color: AppTheme.goldYellow,
                                           ),

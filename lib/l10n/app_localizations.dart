@@ -2455,6 +2455,72 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تخطي'**
   String get onboardingSkip;
+
+  /// No description provided for @propertyStatistics.
+  ///
+  /// In ar, this message translates to:
+  /// **'إحصائيات العقار'**
+  String get propertyStatistics;
+
+  /// No description provided for @bookingsLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحجوزات'**
+  String get bookingsLabel;
+
+  /// No description provided for @totalRevenue.
+  ///
+  /// In ar, this message translates to:
+  /// **'إجمالي الإيرادات'**
+  String get totalRevenue;
+
+  /// No description provided for @ratingsLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقييمات'**
+  String get ratingsLabel;
+
+  /// No description provided for @averageRating.
+  ///
+  /// In ar, this message translates to:
+  /// **'متوسط التقييم'**
+  String get averageRating;
+
+  /// No description provided for @type.
+  ///
+  /// In ar, this message translates to:
+  /// **'النوع'**
+  String get type;
+
+  /// No description provided for @submissionInformation.
+  ///
+  /// In ar, this message translates to:
+  /// **'معلومات الإرسال'**
+  String get submissionInformation;
+
+  /// No description provided for @submitted.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الإرسال'**
+  String get submitted;
+
+  /// No description provided for @lastUpdated.
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر تحديث'**
+  String get lastUpdated;
+
+  /// No description provided for @adminNotes.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظات الإدارة'**
+  String get adminNotes;
+
+  /// No description provided for @failedToLoadProposal.
+  ///
+  /// In ar, this message translates to:
+  /// **'فشل تحميل الاقتراح'**
+  String get failedToLoadProposal;
 }
 
 class _AppLocalizationsDelegate

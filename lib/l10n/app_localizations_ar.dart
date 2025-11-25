@@ -1230,4 +1230,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get onboardingSkip => 'تخطي';
+
+  @override
+  String get propertyStatistics => 'إحصائيات العقار';
+
+  @override
+  String get bookingsLabel => 'الحجوزات';
+
+  @override
+  String get totalRevenue => 'إجمالي الإيرادات';
+
+  @override
+  String get ratingsLabel => 'التقييمات';
+
+  @override
+  String get averageRating => 'متوسط التقييم';
+
+  @override
+  String get type => 'النوع';
+
+  @override
+  String get submissionInformation => 'معلومات الإرسال';
+
+  @override
+  String get submitted => 'تم الإرسال';
+
+  @override
+  String get lastUpdated => 'آخر تحديث';
+
+  @override
+  String get adminNotes => 'ملاحظات الإدارة';
+
+  @override
+  String get failedToLoadProposal => 'فشل تحميل الاقتراح';
 }

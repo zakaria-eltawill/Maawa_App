@@ -435,6 +435,18 @@
   "onboardingPage3Title": "Manage Your Bookings",
   "onboardingPage3Description": "Track all your bookings from one place. Get instant updates on your booking status and pay with ease.",
   "onboardingGetStarted": "Get Started",
-  "onboardingSkip": "Skip"
+  "onboardingSkip": "Skip",
+  
+  "propertyStatistics": "Property Statistics",
+  "bookingsLabel": "Bookings",
+  "totalRevenue": "Total Revenue",
+  "ratingsLabel": "Ratings",
+  "averageRating": "Average Rating",
+  "type": "Type",
+  "submissionInformation": "Submission Information",
+  "submitted": "Submitted",
+  "lastUpdated": "Last Updated",
+  "adminNotes": "Admin Notes",
+  "failedToLoadProposal": "Failed to load proposal"
 }
 

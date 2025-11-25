@@ -1236,4 +1236,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingSkip => 'Skip';
+
+  @override
+  String get propertyStatistics => 'Property Statistics';
+
+  @override
+  String get bookingsLabel => 'Bookings';
+
+  @override
+  String get totalRevenue => 'Total Revenue';
+
+  @override
+  String get ratingsLabel => 'Ratings';
+
+  @override
+  String get averageRating => 'Average Rating';
+
+  @override
+  String get type => 'Type';
+
+  @override
+  String get submissionInformation => 'Submission Information';
+
+  @override
+  String get submitted => 'Submitted';
+
+  @override
+  String get lastUpdated => 'Last Updated';
+
+  @override
+  String get adminNotes => 'Admin Notes';
+
+  @override
+  String get failedToLoadProposal => 'Failed to load proposal';
 }
