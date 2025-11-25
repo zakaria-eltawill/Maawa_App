@@ -114,6 +114,38 @@ class NotificationApi {
     }
   }
 
+  /// Register FCM token using the /user/fcm_token endpoint
+  /// This is an alternative endpoint format
+  Future<void> updateFcmToken(String token) async {
+    if (kDebugMode) {
+      final baseUrl = _dioClient.dio.options.baseUrl;
+      debugPrint('🔔 NotificationApi.updateFcmToken: Calling ${baseUrl}/user/fcm_token');
+      debugPrint('📱 Token: ${token.substring(0, 20)}...');
+    }
+
+    try {
+      final response = await _dioClient.post(
+        '/user/fcm_token',
+        data: {
+          'fcm_token': token,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          debugPrint('✅ NotificationApi.updateFcmToken: FCM UPDATED ✅ $token');
+        }
+      } else {
+        if (kDebugMode) {
+          debugPrint('❌ NotificationApi.updateFcmToken: FCM UPDATED ❌');
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ NotificationApi.updateFcmToken: Error - $e');
+      rethrow;
+    }
+  }
+
   Future<void> unregisterFcmToken(String token) async {
     if (kDebugMode) {
       final baseUrl = _dioClient.dio.options.baseUrl;

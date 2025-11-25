@@ -42,6 +42,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
 
     if (success && mounted) {
+      // Update FCM token after successful login
+      await authController.updateFcm();
       ref.invalidate(currentUserProvider);
       context.go('/home');
     } else if (mounted) {

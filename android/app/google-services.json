@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "625386894036",
+    "project_id": "maawa-project",
+    "storage_bucket": "maawa-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:625386894036:android:f51b52b0ea4d78da008141",
+        "android_client_info": {
+          "package_name": "com.maawa.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJpsBpPPjT7fQ7yxXfNhZNy2_BiMn-Eo8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

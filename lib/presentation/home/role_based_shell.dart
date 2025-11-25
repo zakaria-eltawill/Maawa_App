@@ -39,6 +39,42 @@ class _RoleBasedShellState extends ConsumerState<RoleBasedShell> {
     }
   }
 
+  void _refreshTabData(int index, {required bool isOwner}) {
+    if (isOwner) {
+      // Owner tabs: My Properties (0), Proposals (1), Bookings (2), Profile (3)
+      switch (index) {
+        case 0: // My Properties
+          ref.invalidate(ownerPropertiesProvider);
+          break;
+        case 1: // Proposals
+          ref.invalidate(ownerProposalsProvider);
+          break;
+        case 2: // Bookings
+          ref.invalidate(ownerPendingBookingsProvider);
+          ref.invalidate(ownerAcceptedBookingsProvider);
+          ref.invalidate(ownerRejectedBookingsProvider);
+          ref.invalidate(ownerBookingsProvider);
+          break;
+        case 3: // Profile
+          ref.invalidate(currentUserProvider);
+          break;
+      }
+    } else {
+      // Tenant tabs: Home (0), My Bookings (1), Profile (2)
+      switch (index) {
+        case 0: // Home (Property List)
+          ref.invalidate(propertiesProvider);
+          break;
+        case 1: // My Bookings
+          ref.invalidate(bookingsProvider);
+          break;
+        case 2: // Profile
+          ref.invalidate(currentUserProvider);
+          break;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isOwner = _userRole == UserRole.owner;
@@ -68,6 +104,8 @@ class _RoleBasedShellState extends ConsumerState<RoleBasedShell> {
             setState(() {
               _currentIndex = index;
             });
+            // Refresh data when switching tabs
+            _refreshTabData(index, isOwner: true);
           },
           isOwner: true,
           items: [
@@ -111,6 +149,8 @@ class _RoleBasedShellState extends ConsumerState<RoleBasedShell> {
             setState(() {
               _currentIndex = index;
             });
+            // Refresh data when switching tabs
+            _refreshTabData(index, isOwner: false);
           },
           isOwner: false,
           items: [

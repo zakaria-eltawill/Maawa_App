@@ -1,6 +1,10 @@
+import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:maawa_project/core/di/providers.dart';
 import 'package:maawa_project/core/error/failures.dart';
+import 'package:maawa_project/data/datasources/remote/notification_api.dart';
 import 'package:maawa_project/domain/entities/user.dart';
 import 'package:maawa_project/domain/usecases/login.dart';
 import 'package:maawa_project/domain/usecases/register.dart';
@@ -32,10 +36,12 @@ class AuthState {
 class AuthController extends StateNotifier<AuthState> {
   final LoginUseCase _loginUseCase;
   final RegisterUseCase _registerUseCase;
+  final NotificationApi? _notificationApi;
 
   AuthController(
     this._loginUseCase,
     this._registerUseCase,
+    this._notificationApi,
   ) : super(AuthState());
 
   Future<bool> login(String email, String password) async {
@@ -104,12 +110,46 @@ class AuthController extends StateNotifier<AuthState> {
       return false;
     }
   }
+
+  /// Update FCM token with backend
+  Future<void> updateFcm() async {
+    if (_notificationApi == null) {
+      if (kDebugMode) {
+        debugPrint('⚠️ AuthController.updateFcm: NotificationApi not available');
+      }
+      return;
+    }
+
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        // Use the working endpoint /me/fcm-tokens instead of /user/fcm_token
+        await _notificationApi.registerFcmToken(
+          token: fcmToken,
+          platform: Platform.isAndroid ? 'android' : 'ios',
+        );
+        if (kDebugMode) {
+          debugPrint('✅ AuthController.updateFcm: FCM UPDATED ✅ $fcmToken');
+        }
+      } else {
+        if (kDebugMode) {
+          debugPrint('⚠️ AuthController.updateFcm: FCM token is null');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ AuthController.updateFcm: Error - $e');
+      }
+      // Don't throw error, just log it
+    }
+  }
 }
 
 final authControllerProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) {
   final loginUseCase = ref.read(loginUseCaseProvider);
   final registerUseCase = ref.read(registerUseCaseProvider);
-  return AuthController(loginUseCase, registerUseCase);
+  final notificationApi = ref.read(notificationApiProvider);
+  return AuthController(loginUseCase, registerUseCase, notificationApi);
 });
 

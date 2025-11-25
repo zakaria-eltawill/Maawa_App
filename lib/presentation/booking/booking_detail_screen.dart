@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maawa_project/core/di/providers.dart';
+import 'package:maawa_project/core/error/failures.dart';
 import 'package:maawa_project/core/theme/app_theme.dart';
 import 'package:maawa_project/domain/entities/booking.dart';
 import 'package:maawa_project/domain/entities/property.dart';
@@ -249,6 +250,10 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
   Future<void> _handleOwnerDecision(String decision, {String? reason}) async {
     setState(() => _isProcessing = true);
 
+    // Capture context and l10n before async operations
+    final currentContext = context;
+    final l10n = AppLocalizations.of(currentContext);
+
     try {
       final ownerDecisionUseCase = ref.read(ownerDecisionUseCaseProvider);
       
@@ -258,16 +263,21 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
         reason: reason,
       );
       
-      // Invalidate bookings lists to refresh
+      // Invalidate all booking providers to refresh
       ref.invalidate(bookingsProvider);
+      ref.invalidate(ownerPendingBookingsProvider);
+      ref.invalidate(ownerAcceptedBookingsProvider);
+      ref.invalidate(ownerRejectedBookingsProvider);
       ref.invalidate(ownerBookingsProvider);
       ref.invalidate(bookingDetailProvider(widget.booking.id));
       
+      // Wait a bit for providers to refresh
+      await Future.delayed(const Duration(milliseconds: 300));
+      
       if (mounted) {
-        // Show success animation
-        final l10n = AppLocalizations.of(context);
+        // Show success dialog
         await SuccessDialog.show(
-          context,
+          currentContext,
           title: decision == 'ACCEPT' ? l10n.bookingAccepted : l10n.bookingRejected,
           message: decision == 'ACCEPT' 
               ? l10n.tenantNotified
@@ -275,15 +285,101 @@ class _BookingDetailContentState extends ConsumerState<_BookingDetailContent> {
         );
         
         if (mounted) {
-          context.pop();
+          // Refresh the booking detail
+          ref.invalidate(bookingDetailProvider(widget.booking.id));
         }
       }
     } catch (e) {
       if (mounted) {
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
+        // Extract user-friendly error message from Failure types
+        String errorMessage = l10n.failedToProcessBooking;
+        
+        // Check if it's a Failure type
+        if (e is UnknownFailure) {
+          // For UnknownFailure, check the underlying error
+          final errorString = e.message.toLowerCase();
+          if (errorString.contains('backend returned success') || 
+              errorString.contains('status was updated') ||
+              errorString.contains('parsing failed but backend')) {
+            // Backend succeeded, just parsing failed
+            // Invalidate providers to refresh
+            ref.invalidate(bookingsProvider);
+            ref.invalidate(ownerPendingBookingsProvider);
+            ref.invalidate(ownerAcceptedBookingsProvider);
+            ref.invalidate(ownerRejectedBookingsProvider);
+            ref.invalidate(ownerBookingsProvider);
+            ref.invalidate(bookingDetailProvider(widget.booking.id));
+            
+            // Wait a bit for providers to refresh
+            await Future.delayed(const Duration(milliseconds: 500));
+            
+            if (mounted) {
+              await SuccessDialog.show(
+                currentContext,
+                title: decision == 'ACCEPT' ? l10n.bookingAccepted : l10n.bookingRejected,
+                message: decision == 'ACCEPT' 
+                    ? l10n.tenantNotified
+                    : l10n.tenantWillBeNotified,
+              );
+              
+              if (mounted) {
+                // Refresh the booking detail
+                ref.invalidate(bookingDetailProvider(widget.booking.id));
+              }
+              return; // Exit early, don't show error
+            }
+          } else {
+            errorMessage = e.message;
+          }
+        } else if (e is ValidationFailure) {
+          errorMessage = e.message;
+        } else if (e is ServerFailure) {
+          errorMessage = e.message;
+        } else if (e is UnauthorizedFailure) {
+          errorMessage = 'You do not have permission to ${decision == 'ACCEPT' ? 'accept' : 'reject'} this booking.';
+        } else if (e is NotFoundFailure) {
+          errorMessage = 'Booking not found. It may have been deleted.';
+        } else {
+          // Fallback for string errors or other types
+          final errorString = e.toString().toLowerCase();
+          if (errorString.contains('backend returned success') || 
+              errorString.contains('status was updated') ||
+              errorString.contains('parsing failed but backend')) {
+            // Backend succeeded, just parsing failed
+            // Invalidate providers to refresh
+            ref.invalidate(bookingsProvider);
+            ref.invalidate(ownerPendingBookingsProvider);
+            ref.invalidate(ownerAcceptedBookingsProvider);
+            ref.invalidate(ownerRejectedBookingsProvider);
+            ref.invalidate(ownerBookingsProvider);
+            ref.invalidate(bookingDetailProvider(widget.booking.id));
+            
+            // Wait a bit for providers to refresh
+            await Future.delayed(const Duration(milliseconds: 500));
+            
+            if (mounted) {
+              await SuccessDialog.show(
+                currentContext,
+                title: decision == 'ACCEPT' ? l10n.bookingAccepted : l10n.bookingRejected,
+                message: decision == 'ACCEPT' 
+                    ? l10n.tenantNotified
+                    : l10n.tenantWillBeNotified,
+              );
+              
+              if (mounted) {
+                // Refresh the booking detail
+                ref.invalidate(bookingDetailProvider(widget.booking.id));
+              }
+              return; // Exit early, don't show error
+            }
+          } else {
+            errorMessage = '${l10n.failedToProcessBooking}: ${e.toString()}';
+          }
+        }
+        
+        ScaffoldMessenger.of(currentContext).showSnackBar(
           SnackBar(
-            content: Text('${l10n.failedToProcessBooking}: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: AppTheme.dangerRed,
             duration: const Duration(seconds: 4),
           ),
