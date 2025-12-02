@@ -20,7 +20,7 @@ class NetworkImageWithTimeout extends StatefulWidget {
     this.fit = BoxFit.cover,
     this.width,
     this.height,
-    this.timeout = const Duration(seconds: 10),
+    this.timeout = const Duration(seconds: 15),
     this.placeholder,
     this.errorWidget,
   });
@@ -31,19 +31,53 @@ class NetworkImageWithTimeout extends StatefulWidget {
 
 class _NetworkImageWithTimeoutState extends State<NetworkImageWithTimeout> {
   bool _hasTimedOut = false;
+  bool _hasLoaded = false;
   Timer? _timeoutTimer;
+  bool _callbackScheduled = false;
 
   @override
   void initState() {
     super.initState();
-    // Start timeout timer
-    _timeoutTimer = Timer(widget.timeout, () {
-      if (mounted && !_hasTimedOut) {
-        setState(() {
-          _hasTimedOut = true;
-        });
-      }
-    });
+    // Start timeout with longer duration to avoid false timeouts
+    // The timeout will be cancelled as soon as the image loads
+    _startTimeout();
+  }
+
+  @override
+  void didUpdateWidget(NetworkImageWithTimeout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If URL changed, reset state and restart timeout
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _timeoutTimer?.cancel();
+      _hasTimedOut = false;
+      _hasLoaded = false;
+      _callbackScheduled = false;
+      _startTimeout();
+    }
+  }
+
+  void _startTimeout() {
+    _timeoutTimer?.cancel();
+    // Only start timeout if image hasn't loaded yet
+    if (!_hasLoaded) {
+      _timeoutTimer = Timer(widget.timeout, () {
+        if (mounted && !_hasTimedOut && !_hasLoaded) {
+          setState(() {
+            _hasTimedOut = true;
+          });
+        }
+      });
+    }
+  }
+
+  void _onImageLoaded() {
+    _timeoutTimer?.cancel();
+    if (mounted && !_hasLoaded) {
+      setState(() {
+        _hasLoaded = true;
+        _hasTimedOut = false; // Reset timeout if image loads
+      });
+    }
   }
 
   @override
@@ -103,35 +137,57 @@ class _NetworkImageWithTimeoutState extends State<NetworkImageWithTimeout> {
       return _buildErrorWidget();
     }
 
-    // If timed out, show error widget
-    if (_hasTimedOut) {
+    // If timed out and not loaded, show error widget
+    if (_hasTimedOut && !_hasLoaded) {
       return _buildErrorWidget();
     }
 
     return SizedBox(
       width: widget.width,
       height: widget.height,
-      child: _hasTimedOut
-          ? _buildErrorWidget()
-          : CachedNetworkImage(
-              imageUrl: widget.imageUrl,
-              fit: widget.fit,
-              fadeInDuration: const Duration(milliseconds: 200),
-              fadeOutDuration: const Duration(milliseconds: 100),
-              placeholder: (context, url) => _buildPlaceholder(),
-              errorWidget: (context, url, error) {
-                // Cancel timeout timer on error
-                _timeoutTimer?.cancel();
-                if (kDebugMode) {
-                  debugPrint('❌ Failed to load image: $url');
-                  debugPrint('   Error: $error');
-                }
-                return _buildErrorWidget();
-              },
-              httpHeaders: const {
-                'Cache-Control': 'max-age=3600',
-              },
-            ),
+      child: CachedNetworkImage(
+        imageUrl: widget.imageUrl,
+        fit: widget.fit,
+        fadeInDuration: const Duration(milliseconds: 200),
+        fadeOutDuration: const Duration(milliseconds: 100),
+        placeholder: (context, url) {
+          // Image is loading, but don't timeout if it's from cache
+          return _buildPlaceholder();
+        },
+        errorWidget: (context, url, error) {
+          // Cancel timeout timer on error - defer to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _timeoutTimer?.cancel();
+          });
+          if (kDebugMode) {
+            debugPrint('❌ Failed to load image: $url');
+            debugPrint('   Error: $error');
+          }
+          return _buildErrorWidget();
+        },
+        // Use imageBuilder to detect when image successfully loads
+        imageBuilder: (context, imageProvider) {
+          // Image loaded successfully (from cache or network) - cancel timeout
+          // Defer state update to after build phase to avoid setState during build
+          if (!_callbackScheduled && !_hasLoaded) {
+            _callbackScheduled = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _onImageLoaded();
+              _callbackScheduled = false;
+            });
+          }
+          return Image(
+            image: imageProvider,
+            fit: widget.fit,
+          );
+        },
+        httpHeaders: const {
+          'Cache-Control': 'max-age=3600',
+        },
+        // Increase cache duration to prevent re-fetching
+        memCacheWidth: widget.width != null ? widget.width!.toInt() : null,
+        memCacheHeight: widget.height != null ? widget.height!.toInt() : null,
+      ),
     );
   }
 }

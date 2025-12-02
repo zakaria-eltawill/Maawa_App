@@ -170,9 +170,10 @@ class PropertyCardCompact extends StatelessWidget {
     final imageUrl = property.imageUrls.first;
     
     return NetworkImageWithTimeout(
+      key: ValueKey('property_image_${property.id}_$imageUrl'),
       imageUrl: imageUrl,
       fit: BoxFit.cover,
-      timeout: const Duration(seconds: 8),
+      timeout: const Duration(seconds: 15),
       placeholder: _buildPlaceholder(showLoading: true),
       errorWidget: _buildPlaceholder(),
     );
