@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,8 +12,8 @@ import 'package:maawa_project/presentation/widgets/shimmer_loading.dart';
 import 'package:maawa_project/presentation/widgets/app_button.dart';
 import 'package:maawa_project/presentation/widgets/app_card.dart';
 import 'package:maawa_project/presentation/widgets/rating_review_dialog.dart';
+import 'package:maawa_project/presentation/widgets/network_image_with_timeout.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class TenantBookingsScreen extends ConsumerStatefulWidget {
   const TenantBookingsScreen({super.key});
@@ -26,20 +27,45 @@ class _TenantBookingsScreenState extends ConsumerState<TenantBookingsScreen> {
   void initState() {
     super.initState();
     // Check for completed bookings after the first frame
+    // This will also run when user navigates to this tab (data is refreshed automatically via role_based_shell)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkForCompletedBookings();
     });
   }
 
+  /// Check for completed bookings and show review dialog
+  /// Note: Backend automatically updates booking status from CONFIRMED/ACCEPTED to COMPLETED
+  /// daily at midnight when check_out date has passed. The frontend will see the updated
+  /// status on the next data fetch (tab navigation, pull-to-refresh, etc.)
   Future<void> _checkForCompletedBookings() async {
     final bookingsAsync = ref.read(bookingsProvider);
     await bookingsAsync.when(
       data: (bookings) async {
+        if (kDebugMode) {
+          debugPrint('🔍 Checking ${bookings.length} bookings for completed status...');
+          for (final booking in bookings) {
+            final now = DateTime.now();
+            final checkOutDate = DateTime(booking.checkOut.year, booking.checkOut.month, booking.checkOut.day);
+            final today = DateTime(now.year, now.month, now.day);
+            final isCheckOutPassed = today.isAfter(checkOutDate);
+            debugPrint('📋 Booking ${booking.id}:');
+            debugPrint('   Status: ${booking.status}');
+            debugPrint('   Check-out: ${booking.checkOut}');
+            debugPrint('   Today: $today');
+            debugPrint('   Check-out passed: $isCheckOutPassed');
+            debugPrint('   Should be completed: ${booking.shouldBeCompleted}');
+          }
+        }
+        
         // Find the first completed booking that hasn't been reviewed
+        // Backend automatically updates status to "completed" when check_out date passes
         for (final booking in bookings) {
-          if (booking.isCompleted && booking.propertyName != null) {
+          if (booking.status == BookingStatus.completed && booking.propertyName != null) {
             final hasBeenReviewed = await hasBookingBeenReviewed(booking.id);
             if (!hasBeenReviewed && mounted) {
+              if (kDebugMode) {
+                debugPrint('✅ Found completed booking: ${booking.id}, showing review dialog');
+              }
               // Show dialog for this booking
               await RatingReviewDialog.show(
                 context,
@@ -69,9 +95,15 @@ class _TenantBookingsScreenState extends ConsumerState<TenantBookingsScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
+          if (kDebugMode) {
+            debugPrint('🔄 Refreshing bookings data...');
+          }
+          // Force refresh by invalidating the provider
           ref.invalidate(bookingsProvider);
-          // Check for completed bookings after refresh
-          await Future.delayed(const Duration(milliseconds: 500));
+          // Wait for data to refresh, then check for completed bookings
+          // Backend automatically updates status to "completed" daily at midnight, so refresh will fetch updated status
+          // Note: If the scheduled task hasn't run yet, the status may still show as CONFIRMED/ACCEPTED
+          await Future.delayed(const Duration(milliseconds: 1000));
           if (mounted) {
             _checkForCompletedBookings();
           }
@@ -193,23 +225,24 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
     // If booking has thumbnail, try to use it first
     if (booking.propertyThumbnail != null && 
         booking.propertyThumbnail!.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: booking.propertyThumbnail!,
+      final thumbnailUrl = booking.propertyThumbnail!;
+      
+      // Validate URL format
+      if (thumbnailUrl.isEmpty || 
+          (!thumbnailUrl.startsWith('http://') && !thumbnailUrl.startsWith('https://'))) {
+        if (kDebugMode) {
+          debugPrint('⚠️ Invalid thumbnail URL: $thumbnailUrl');
+        }
+        return _buildPropertyImageFallback(booking.propertyId);
+      }
+
+      return NetworkImageWithTimeout(
+        imageUrl: thumbnailUrl,
         width: 80,
         height: 80,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          width: 80,
-          height: 80,
-          color: AppTheme.gray200,
-          child: const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-        errorWidget: (context, url, error) {
-          // If image fails to load, show placeholder
-          return _buildPlaceholder();
-        },
+        timeout: const Duration(seconds: 8),
+        errorWidget: _buildPropertyImageFallback(booking.propertyId),
       );
     }
     // If no thumbnail, fetch property details as fallback
@@ -222,20 +255,24 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
     return propertyAsync.when(
       data: (property) {
         if (property.imageUrls.isNotEmpty) {
-          return CachedNetworkImage(
-            imageUrl: property.imageUrls.first,
+          final imageUrl = property.imageUrls.first;
+          
+          // Validate URL format
+          if (imageUrl.isEmpty || 
+              (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://'))) {
+            if (kDebugMode) {
+              debugPrint('⚠️ Invalid property image URL: $imageUrl');
+            }
+            return _buildPlaceholder();
+          }
+
+          return NetworkImageWithTimeout(
+            imageUrl: imageUrl,
             width: 80,
             height: 80,
             fit: BoxFit.cover,
-            placeholder: (context, url) => Container(
-              width: 80,
-              height: 80,
-              color: AppTheme.gray200,
-              child: const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-            errorWidget: (context, url, error) => _buildPlaceholder(),
+            timeout: const Duration(seconds: 8),
+            errorWidget: _buildPlaceholder(),
           );
         }
         return _buildPlaceholder();
@@ -429,4 +466,3 @@ class _TenantBookingCardState extends ConsumerState<_TenantBookingCard> {
     );
   }
 }
-

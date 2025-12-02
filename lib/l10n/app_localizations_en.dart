@@ -943,6 +943,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Invalid review data. Please check your input.';
 
   @override
+  String get ratingPoor => 'Poor';
+
+  @override
+  String get ratingFair => 'Fair';
+
+  @override
+  String get ratingGood => 'Good';
+
+  @override
+  String get ratingVeryGood => 'Very Good';
+
+  @override
+  String get ratingExcellent => 'Excellent';
+
+  @override
   String get dateUnavailable => 'This date is unavailable';
 
   @override

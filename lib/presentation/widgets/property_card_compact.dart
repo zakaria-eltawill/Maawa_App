@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:maawa_project/core/theme/app_theme.dart';
 import 'package:maawa_project/domain/entities/property.dart';
 import 'package:maawa_project/presentation/widgets/status_badge.dart';
 import 'package:maawa_project/presentation/widgets/rating_display.dart';
+import 'package:maawa_project/presentation/widgets/network_image_with_timeout.dart';
 import 'package:maawa_project/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
@@ -43,33 +43,7 @@ class PropertyCardCompact extends StatelessWidget {
               children: [
                 AspectRatio(
                   aspectRatio: 16 / 9,
-                  child: property.imageUrls.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: property.imageUrls.first,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: AppTheme.gray200,
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: AppTheme.gray200,
-                            child: const Icon(
-                              Icons.image_not_supported,
-                              size: 48,
-                              color: AppTheme.gray400,
-                            ),
-                          ),
-                        )
-                      : Container(
-                          color: AppTheme.gray200,
-                          child: const Icon(
-                            Icons.home_outlined,
-                            size: 48,
-                            color: AppTheme.gray400,
-                          ),
-                        ),
+                  child: _buildPropertyImage(property),
                 ),
                 if (showStatus)
                   Positioned(
@@ -184,6 +158,40 @@ class PropertyCardCompact extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPropertyImage(Property property) {
+    // Check if image URLs are valid
+    if (property.imageUrls.isEmpty) {
+      return _buildPlaceholder();
+    }
+
+    final imageUrl = property.imageUrls.first;
+    
+    return NetworkImageWithTimeout(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      timeout: const Duration(seconds: 8),
+      placeholder: _buildPlaceholder(showLoading: true),
+      errorWidget: _buildPlaceholder(),
+    );
+  }
+
+  Widget _buildPlaceholder({bool showLoading = false}) {
+    return Container(
+      color: AppTheme.gray200,
+      child: showLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+              ),
+            )
+          : const Icon(
+              Icons.home_outlined,
+              size: 48,
+              color: AppTheme.gray400,
+            ),
     );
   }
 

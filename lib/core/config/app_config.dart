@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 class AppConfig {
   // Base URL from dart-define or default
-  // Production API (deployed): http://3.68.75.38/v1
+  // Production API (deployed): http://3.72.254.198/v1
   // Local Laravel Herd (Android emulator):
   //   - Herd default domain: http://maawa_project.test/v1 (desktop browser only)
   //   - Emulator localhost alias: http://10.0.2.2/v1
@@ -11,11 +11,11 @@ class AppConfig {
   static String get baseUrl {
     const baseUrl = String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'http://3.68.75.38/v1', // Production backend
+      defaultValue: 'http://3.72.254.198/v1', // Production backend
     );
     if (kDebugMode) {
       debugPrint('AppConfig.baseUrl: $baseUrl');
-      debugPrint('🌐 Default (deployed) backend: http://3.68.75.38/v1');
+      debugPrint('🌐 Default (deployed) backend: http://3.72.254.198/v1');
       debugPrint('🧪 Local dev options:');
       debugPrint('   • http://10.0.2.2/v1 (emulator → host localhost)');
       debugPrint('   • http://<your_wifi_ip>/v1 (real device on same network)');

@@ -938,6 +938,21 @@ class AppLocalizationsAr extends AppLocalizations {
       'بيانات التقييم غير صحيحة. يرجى التحقق من المدخلات.';
 
   @override
+  String get ratingPoor => 'ضعيف';
+
+  @override
+  String get ratingFair => 'مقبول';
+
+  @override
+  String get ratingGood => 'جيد';
+
+  @override
+  String get ratingVeryGood => 'جيد جداً';
+
+  @override
+  String get ratingExcellent => 'ممتاز';
+
+  @override
   String get dateUnavailable => 'هذا التاريخ غير متاح';
 
   @override

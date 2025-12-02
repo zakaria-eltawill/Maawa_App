@@ -1910,6 +1910,36 @@ abstract class AppLocalizations {
   /// **'بيانات التقييم غير صحيحة. يرجى التحقق من المدخلات.'**
   String get invalidReviewData;
 
+  /// No description provided for @ratingPoor.
+  ///
+  /// In ar, this message translates to:
+  /// **'ضعيف'**
+  String get ratingPoor;
+
+  /// No description provided for @ratingFair.
+  ///
+  /// In ar, this message translates to:
+  /// **'مقبول'**
+  String get ratingFair;
+
+  /// No description provided for @ratingGood.
+  ///
+  /// In ar, this message translates to:
+  /// **'جيد'**
+  String get ratingGood;
+
+  /// No description provided for @ratingVeryGood.
+  ///
+  /// In ar, this message translates to:
+  /// **'جيد جداً'**
+  String get ratingVeryGood;
+
+  /// No description provided for @ratingExcellent.
+  ///
+  /// In ar, this message translates to:
+  /// **'ممتاز'**
+  String get ratingExcellent;
+
   /// No description provided for @dateUnavailable.
   ///
   /// In ar, this message translates to:

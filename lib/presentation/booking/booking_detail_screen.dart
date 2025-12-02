@@ -39,12 +39,16 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     });
   }
 
+  /// Check for completed booking and show review dialog
+  /// Note: Backend automatically updates booking status from CONFIRMED/ACCEPTED to COMPLETED
+  /// daily at midnight when check_out date has passed. The frontend will see the updated
+  /// status on the next data fetch (refresh, navigation, etc.)
   Future<void> _checkForCompletedBooking() async {
     final bookingAsync = ref.read(bookingDetailProvider(widget.bookingId));
     await bookingAsync.when(
       data: (booking) async {
         // Check if booking is completed and hasn't been reviewed
-        if (booking.isCompleted && booking.propertyName != null) {
+        if (booking.status == BookingStatus.completed && booking.propertyName != null) {
           final hasBeenReviewed = await hasBookingBeenReviewed(booking.id);
           if (!hasBeenReviewed && mounted) {
             // Show dialog for this booking
@@ -54,6 +58,23 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               bookingId: booking.id,
               propertyName: booking.propertyName!,
             );
+          }
+        } else {
+          // Check if booking should be completed but isn't yet
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          final checkOutDate = DateTime(booking.checkOut.year, booking.checkOut.month, booking.checkOut.day);
+          final isCheckOutPassed = today.isAfter(checkOutDate);
+          final shouldBeCompleted = isCheckOutPassed && 
+              (booking.status == BookingStatus.confirmed || booking.status == BookingStatus.accepted);
+          
+          if (shouldBeCompleted && kDebugMode) {
+            debugPrint('⚠️ Booking ${booking.id} should be COMPLETED:');
+            debugPrint('   - Current status: ${booking.status}');
+            debugPrint('   - Check-out date: $checkOutDate');
+            debugPrint('   - Today: $today');
+            debugPrint('   - Status will update automatically at midnight (backend scheduled task)');
+            debugPrint('   - Or backend can run manually: php artisan bookings:update-completed');
           }
         }
       },
@@ -137,8 +158,9 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
           if (booking != null) {
             ref.invalidate(propertyDetailProvider(booking.propertyId));
           }
-          // Check for completed booking after refresh
-          await Future.delayed(const Duration(milliseconds: 500));
+          // Wait for data to refresh, then check for completed booking
+          // Backend automatically updates status to "completed" daily, so refresh will fetch updated status
+          await Future.delayed(const Duration(milliseconds: 800));
           if (mounted) {
             _checkForCompletedBooking();
           }
